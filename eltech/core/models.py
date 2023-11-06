@@ -2,48 +2,78 @@
 
 import uuid
 import os
+from datetime import datetime
 
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.translation import gettext_lazy as _
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
-    PermissionsMixin
+    PermissionsMixin,
+    Group,
+    Permission
 )
 
 
-def image_file_path(instance, filename, image_parent):
-    """Generate file path for new image"""
+def product_image_file_path(instance, filename):
+    """Generate file path for new product image"""
 
     # get the extension of the file (png/jpg/etc..)
     ext = os.path.splitext(filename)[1]
     filename = f'{uuid.uuid4()}{ext}'
 
-    return os.path.join('uploads', image_parent, filename)
+    return os.path.join('uploads', 'product', filename)
+
+
+def category_image_file_path(instance, filename):
+    """Generate file path for new category image"""
+
+    # get the extension of the file (png/jpg/etc..)
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'category', filename)
+
+
+def post_image_file_path(instance, filename):
+    """Generate file path for new post image"""
+
+    # get the extension of the file (png/jpg/etc..)
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'post', filename)
+
+
+def profile_image_file_path(instance, filename):
+    """Generate file path for new profile image"""
+
+    # get the extension of the file (png/jpg/etc..)
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'profile', filename)
 
 
 class UserManager(BaseUserManager):
-    """Manager for users"""
+    """Manager for users."""
 
     def create_user(self, email, password=None, **extra_fields):
-        """Create, save and return a new user"""
-
+        """Create, save and return a new user."""
         if not email:
             raise ValueError('User must have an email address.')
-
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password=None, **extra_fields):
-        """Create, save and return a new superuser"""
-
-        user = self.create_user(email=email, password=password, **extra_fields)
-
+    def create_superuser(self, email, password):
+        """Create and return a new superuser."""
+        user = self.create_user(email, password)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -55,7 +85,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
 
     email = models.EmailField(max_length=255, unique=True)
+    email_confirmed = models.BooleanField(default=False)
+    mobile_phone = models.CharField(max_length=15, unique=True)
+    profile_picture = models.ImageField(
+        upload_to=profile_image_file_path,
+        null=True,
+        blank=True
+    )
+    birth_date = models.DateField(null=True, blank=True)
     name = models.CharField(max_length=255)
+    country = models.CharField(max_length=50, null=True, blank=True)
+    activation_sent_date = models.DateTimeField(default=datetime.now)
+
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -63,11 +107,32 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
 
+    groups = models.ManyToManyField(
+        Group,
+        verbose_name=_('groups'),
+        blank=True,
+        help_text=_(
+            'The groups this user belongs to. A user will get all permissions '
+            'granted to each of their groups.'
+        ),
+        related_name="%(app_label)s_%(class)s_related",
+        related_query_name="%(app_label)s_%(class)ss",
+    )
+
+    user_permissions = models.ManyToManyField(
+        Permission,
+        verbose_name=_('user permissions'),
+        blank=True,
+        help_text=_('Specific permissions for this user.'),
+        related_name="%(app_label)s_%(class)s_related",
+        related_query_name="%(app_label)s_%(class)ss",
+    )
+
 
 class Category(models.Model):
     """Category object"""
     name = models.CharField(max_length=255)
-    image = models.ImageField(upload_to=lambda instance, filename: image_file_path(instance, filename, 'category'))
+    image = models.ImageField(upload_to=category_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -115,7 +180,7 @@ class Review(models.Model):
 
 class ProductImage(models.Model):
     """Product image object"""
-    image = models.ImageField(upload_to=lambda instance, filename: image_file_path(instance, filename, 'product'))
+    image = models.ImageField(upload_to=product_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
@@ -193,7 +258,7 @@ class Post(models.Model):
     """Post object"""
     title = models.CharField(max_length=255)
     content = models.TextField()
-    image = models.ImageField(upload_to=lambda instance, filename: image_file_path(instance, filename, 'post'))
+    image = models.ImageField(upload_to=post_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
