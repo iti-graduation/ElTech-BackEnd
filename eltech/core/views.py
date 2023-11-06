@@ -1,3 +1,10 @@
-from django.shortcuts import render
+""" Core views for app """
 
-# Create your views here.
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+
+@api_view(['GET'])
+def health_check(request):
+    """Returns a successful response"""
+    return Response({'healthy': True})
