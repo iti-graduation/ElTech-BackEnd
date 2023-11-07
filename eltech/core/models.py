@@ -58,6 +58,16 @@ def profile_image_file_path(instance, filename):
     return os.path.join('uploads', 'profile', filename)
 
 
+def service_image_file_path(instance, filename):
+    """Generate file path for new profile image"""
+
+    # get the extension of the file (png/jpg/etc..)
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'service', filename)
+
+
 class UserManager(BaseUserManager):
     """Manager for users."""
 
@@ -95,6 +105,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateField(null=True, blank=True)
     name = models.CharField(max_length=255)
     country = models.CharField(max_length=50, null=True, blank=True)
+    is_subscribed = models.BooleanField(default=False)
     activation_sent_date = models.DateTimeField(default=datetime.now)
 
     first_name = models.CharField(max_length=30)
@@ -148,8 +159,12 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     stock = models.PositiveIntegerField()
+    view_count = models.PositiveIntegerField(default=0)
     is_hot = models.BooleanField(default=False)
     is_on_sale = models.BooleanField(default=False)
+    sale_amount = models.PositiveSmallIntegerField(default=0)
+    is_featured = models.BooleanField(default=False)
+    is_trending = models.BooleanField(default=False)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category')
 
     def __str__(self):
@@ -197,6 +212,11 @@ class ProductFeature(models.Model):
         return self.feature
 
 
+class WeeklyDeal(models.Model):
+    time = models.TimeField()
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+
 class Favorite(models.Model):
     """Favorite product object"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -207,6 +227,7 @@ class Coupon(models.Model):
     """Coupon object"""
     code = models.CharField(max_length=255)
     discount = models.DecimalField(max_digits=5, decimal_places=2)
+    uses_limit = models.PositiveSmallIntegerField()
 
 
 class Cart(models.Model):
@@ -276,3 +297,9 @@ class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+
+
+class Service(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    logo = models.ImageField(upload_to=service_image_file_path)
