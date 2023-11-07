@@ -3,6 +3,8 @@
 from unittest.mock import patch
 from decimal import Decimal
 from django.test import TestCase
+from django.utils import timezone
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from django.contrib.auth import get_user_model
 
@@ -99,9 +101,18 @@ class ProductTests(TestCase):
             stock=10,
             is_hot=True,
             is_on_sale=False,
+            is_featured=False,
+            is_trending=False,
+            sale_amount=0,
+            view_count=0,
             category=category
         )
         self.assertEqual(product.name, 'Product1')
+        self.assertLessEqual(product.created_at, product.updated_at)
+        self.assertEqual(product.view_count, 0)
+        self.assertEqual(product.sale_amount, 0)
+        self.assertEqual(product.is_featured, False)
+        self.assertEqual(product.is_trending, False)
 
     def test_create_rating(self):
         user = create_user()
@@ -233,9 +244,11 @@ class CouponTests(TestCase):
     def test_create_coupon(self):
         coupon = models.Coupon.objects.create(
             code='TestCode',
-            discount=Decimal('0.10')
+            discount=Decimal('0.10'),
+            uses_limit=10
         )
         self.assertEqual(coupon.code, 'TestCode')
+        self.assertEqual(coupon.uses_limit, 10)
 
 
 class CartProductTests(TestCase):
@@ -332,3 +345,53 @@ class CommentTests(TestCase):
             post=post
         )
         self.assertEqual(comment.content, 'Test comment')
+
+
+class WeeklyDealTests(TestCase):
+    """Test WeeklyDeal model"""
+
+    def test_create_weekly_deal(self):
+        category = models.Category.objects.create(
+            name='Category1'
+        )
+        product = models.Product.objects.create(
+            name='Product1',
+            description='Product1 description',
+            price=Decimal('5.50'),
+            stock=10,
+            is_hot=True,
+            is_on_sale=False,
+            category=category
+        )
+        weekly_deal = models.WeeklyDeal.objects.create(
+            time=timezone.now(),
+            product=product
+        )
+        self.assertEqual(weekly_deal.product, product)
+
+
+class ServiceTests(TestCase):
+    """Test Service model"""
+
+    @patch('core.models.uuid.uuid4')
+    def test_service_image_file_path(self, mock_uuid):
+        """Test generating image path for service image"""
+
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+        file_path = models.service_image_file_path(None, 'example.jpg')
+
+        self.assertEqual(file_path, f'uploads/service/{uuid}.jpg')
+
+    def test_create_service(self):
+        """Test creating service with image"""
+
+        # Create a temporary image file
+        image = SimpleUploadedFile(name='test_image.jpg', content=b'', content_type='image/jpeg')
+
+        service = models.Service.objects.create(
+            title='Service1',
+            description='Service1 description',
+            logo=image
+        )
+        self.assertEqual(service.title, 'Service1')

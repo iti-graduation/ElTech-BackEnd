@@ -105,6 +105,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateField(null=True, blank=True)
     name = models.CharField(max_length=255)
     country = models.CharField(max_length=50, null=True, blank=True)
+    facebook_profile = models.URLField(null=True, blank=True)
+    instagram_profile = models.URLField(null=True, blank=True)
+    twitter_profile = models.URLField(null=True, blank=True)
     is_subscribed = models.BooleanField(default=False)
     activation_sent_date = models.DateTimeField(default=datetime.now)
 
@@ -227,7 +230,7 @@ class Coupon(models.Model):
     """Coupon object"""
     code = models.CharField(max_length=255)
     discount = models.DecimalField(max_digits=5, decimal_places=2)
-    uses_limit = models.PositiveSmallIntegerField()
+    uses_limit = models.PositiveSmallIntegerField(default=0)
 
 
 class Cart(models.Model):
@@ -300,6 +303,7 @@ class Comment(models.Model):
 
 
 class Service(models.Model):
+    """Service object"""
     title = models.CharField(max_length=255)
     description = models.TextField()
     logo = models.ImageField(upload_to=service_image_file_path)
