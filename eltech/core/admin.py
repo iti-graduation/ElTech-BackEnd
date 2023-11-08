@@ -18,8 +18,19 @@ class UserAdmin(BaseUserAdmin):
             None,
             {
                 'fields': (
+                    'first_name',
+                    'last_name',
                     'email',
-                    'password'
+                    'email_confirmed',
+                    'password',
+                    'mobile_phone',
+                    'profile_picture',
+                    'birth_date',
+                    'country',
+                    'is_subscribed',
+                    'facebook_profile',
+                    'instagram_profile',
+                    'twitter_profile'
                 )
             }
         ),

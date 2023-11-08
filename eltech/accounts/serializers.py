@@ -1,5 +1,12 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.conf import settings
+
 
 User = get_user_model()
 
@@ -15,7 +22,25 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create a new user with encrypted password and return it"""
-        return User.objects.create_user(**validated_data)
+
+        user = User.objects.create_user(**validated_data)
+        token_generator = PasswordResetTokenGenerator()
+        token = token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        # Create verification link
+        verify_link = reverse('accounts:verify-email', args=[uid, token])
+
+        # Email content
+        subject = 'Verify your account'
+        message = f'Follow this link to verify your account: {verify_link}'
+        from_email = '0eltech0@gmail.com'
+        recipient_list = [user.email]
+
+        # Send email
+        send_mail(subject, message, from_email, recipient_list)
+
+        return user
 
     def update(self, instance, validated_data):
         """Update a user, setting the password correctly and return it"""
@@ -55,3 +80,15 @@ class AuthTokenSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("The two passwords do not match.")
+        return data
