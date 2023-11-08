@@ -18,7 +18,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('email', 'password', 'mobile_phone', 'profile_picture',
                   'birth_date', 'country', 'is_subscribed', 'first_name', 'last_name',
                   'facebook_profile', 'instagram_profile', 'twitter_profile')
-        extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
+        extra_kwargs = {
+            'password': {'write_only': True, 'min_length': 5},
+        }
 
     def create(self, validated_data):
         """Create a new user with encrypted password and return it"""
@@ -92,3 +94,19 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError("The two passwords do not match.")
         return data
+
+class SubscribeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value, is_subscribed=True).exists():
+            raise serializers.ValidationError("This email is already subscribed.")
+        return value
+
+class UnSubscribeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value, is_subscribed=False).exists():
+            raise serializers.ValidationError("This email is not subscribed.")
+        return value

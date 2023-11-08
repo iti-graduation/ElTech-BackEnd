@@ -9,7 +9,9 @@ from .serializers import (
     UserSerializer,
     AuthTokenSerializer,
     PasswordResetConfirmSerializer,
-    PasswordResetRequestSerializer
+    PasswordResetRequestSerializer,
+    SubscribeSerializer,
+    UnSubscribeSerializer
 )
 
 from django.contrib.auth.tokens import default_token_generator
@@ -23,12 +25,45 @@ from rest_framework import status, views
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 User = get_user_model()
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system"""
 
     serializer_class = UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        email = request.data.get('email')
+        if email:
+            existing_users = User.objects.filter(email=email)
+            if existing_users.exists():
+                user = existing_users.first()
+                if len(user.password):
+                    return Response({'email': ['user with this email already exists.']}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    # Update the existing user
+                    serializer = self.get_serializer(user, data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()  # This will now call the update method of the serializer
+                        headers = self.get_success_headers(serializer.data)
+                        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # No existing user, proceed with creation
+                if serializer.is_valid():
+                    serializer.save()
+                    headers = self.get_success_headers(serializer.data)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'email': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateTokenView(ObtainAuthToken):
@@ -117,4 +152,50 @@ class PasswordResetConfirmView(generics.GenericAPIView):
                 return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SubscribeView(APIView):
+    permission_classes = []
+    serializer_class = SubscribeSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = SubscribeSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                # Check if user already exists
+                user = User.objects.get(email=email)
+                if user.is_subscribed:
+                    return Response({"message": "This email is already subscribed."}, status=status.HTTP_400_BAD_REQUEST)
+            except User.DoesNotExist:
+                # If user does not exist, create a new inactive user
+                user = User.objects.create(email=email, is_active=False)
+                # Send an email to set a password, confirm the email, etc.
+
+            # Subscribe the user
+            user.is_subscribed = True
+            user.save()
+            # Send a subscription confirmation email here
+            # You can send a welcome email here.
+            return Response({"message": "You've been subscribed successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UnSubscribeView(APIView):
+    permission_classes = []
+    serializer_class = SubscribeSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = UnSubscribeSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                # Check if user already exists
+                user = User.objects.get(email=email)
+                
+                if user.is_subscribed:
+                    user.is_subscribed = False
+                    user.save()
+                    return Response({"message": "You've successfully unsubscribed from our website."}, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                return Response({"message": "You have not subscribed before!"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
