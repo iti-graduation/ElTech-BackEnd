@@ -103,7 +103,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True
     )
     birth_date = models.DateField(null=True, blank=True)
-    name = models.CharField(max_length=255)
+    # name = models.CharField(max_length=255)
     country = models.CharField(max_length=50, null=True, blank=True)
     facebook_profile = models.URLField(null=True, blank=True)
     instagram_profile = models.URLField(null=True, blank=True)
@@ -120,6 +120,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+    @property
+    def name(self):
+        """Returns the full name of the user."""
+
+        return f'{self.first_name} {self.last_name}'
 
 
 class Category(models.Model):
