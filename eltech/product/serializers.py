@@ -54,17 +54,50 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    """Serializer for product images."""
+
+    class Meta:
+        model = models.ProductImage
+        fields = ['image']
+        read_only_fields = ['image']
+
+
+class ProductThumbnailSerializer(serializers.ModelSerializer):
+    """Serializer for product thumbnail."""
+
+    class Meta:
+        model = models.ProductImage
+        fields = ['image']
+        read_only_fields = ['image']
+
+    def to_representation(self, instance):
+        """Only return the image if it is a thumbnail."""
+        if instance.is_thumbnail:
+            return super().to_representation(instance)
+        return {}
+
+
 class ProductSerializer(serializers.ModelSerializer):
     """Serializer for products."""
+    thumbnail = ProductThumbnailSerializer(read_only=True)
 
     class Meta:
         model = models.Product
-        fields = ['id', 'name', 'price', 'is_hot', 'is_on_sale', 'sale_amount']
+        fields = ['id', 'name', 'price', 'is_hot', 'is_on_sale',
+                  'sale_amount', 'thumbnail']
         read_only_fields = ['id']
+
+    def to_representation(self, instance):
+        """Add thumbnail to serialized data."""
+        representation = super().to_representation(instance)
+        representation['thumbnail'] = representation.get('thumbnail', {})
+        return representation
 
 
 class ProductDetailSerializer(ProductSerializer):
     """Serializer for product detail view."""
+    images = ProductImageSerializer(many=True, read_only=True)
     features = ProductFeatureSerializer(many=True, read_only=True)
     ratings = RatingSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
@@ -72,7 +105,8 @@ class ProductDetailSerializer(ProductSerializer):
 
     class Meta(ProductSerializer.Meta):
         fields = ProductSerializer.Meta.fields + [
-            'description', 'stock', 'features', 'ratings', 'reviews', 'category'
+            'description', 'stock', 'features', 'ratings', 'reviews',
+            'category', 'images'
         ]
 
     def to_representation(self, instance):
@@ -84,6 +118,7 @@ class ProductDetailSerializer(ProductSerializer):
         representation['average_rating'] = average_rating \
             if average_rating is not None else 0
         representation['reviews'] = representation.get('reviews', [])
+        representation['thumbnail'] = representation.get('thumbnail', {})
         return representation
 
 

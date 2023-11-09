@@ -184,9 +184,13 @@ class Review(models.Model):
 class ProductImage(models.Model):
     """Product image object"""
     image = models.ImageField(upload_to=product_image_file_path)
+    is_thumbnail = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+
+    def __str__(self):
+        return self.image.url
 
 
 class ProductFeature(models.Model):
