@@ -72,8 +72,40 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
+class ProductImageInline(admin.TabularInline):
+    model = models.ProductImage
+    extra = 1
+
+
+class ProductFeatureInline(admin.TabularInline):
+    model = models.ProductFeature
+    extra = 1
+
+
+class RatingInline(admin.TabularInline):
+    model = models.Rating
+    extra = 1
+
+
+class ReviewInline(admin.TabularInline):
+    model = models.Review
+    extra = 1
+
+
+class ProductAdmin(admin.ModelAdmin):
+    inlines = [ProductImageInline, ProductFeatureInline, RatingInline, ReviewInline]
+    list_display = ('name', 'price', 'is_hot', 'is_on_sale', 'is_weekly_deal')
+    list_filter = ('is_hot', 'is_on_sale')
+
+    def is_weekly_deal(self, obj):
+        """Return whether the product is a weekly deal."""
+        return obj.weeklydeal_set.exists()
+
+    is_weekly_deal.boolean = True
+
+
 admin.site.register(models.User, UserAdmin)
-admin.site.register(models.Product)
+admin.site.register(models.Product, ProductAdmin)
 admin.site.register(models.Category)
 admin.site.register(models.WeeklyDeal)
 admin.site.register(models.Post)

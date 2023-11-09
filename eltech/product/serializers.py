@@ -74,7 +74,7 @@ class ProductThumbnailSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Only return the image if it is a thumbnail."""
         if instance.is_thumbnail:
-            return super().to_representation(instance)
+            return {'image': self.context['request'].build_absolute_uri(instance.image.url)}
         return {}
 
 
@@ -91,7 +91,13 @@ class ProductSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Add thumbnail to serialized data."""
         representation = super().to_representation(instance)
-        representation['thumbnail'] = representation.get('thumbnail', {})
+
+        thumbnail = instance.images.filter(is_thumbnail=True).first()
+        if thumbnail:
+            representation['thumbnail'] = ProductThumbnailSerializer(thumbnail, context=self.context).data
+        else:
+            representation['thumbnail'] = {}
+
         return representation
 
 
@@ -112,13 +118,19 @@ class ProductDetailSerializer(ProductSerializer):
     def to_representation(self, instance):
         """Add average rating to serialized data."""
         representation = super().to_representation(instance)
+
+        thumbnail = instance.images.filter(is_thumbnail=True).first()
+        if thumbnail:
+            representation['thumbnail'] = ProductThumbnailSerializer(thumbnail, context=self.context).data
+        else:
+            representation['thumbnail'] = {}
+
         average_rating = instance.rating_set.aggregate(
             average_rating=Avg('rating')
         )['average_rating']
         representation['average_rating'] = average_rating \
             if average_rating is not None else 0
         representation['reviews'] = representation.get('reviews', [])
-        representation['thumbnail'] = representation.get('thumbnail', {})
         return representation
 
 
