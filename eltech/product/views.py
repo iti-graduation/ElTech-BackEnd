@@ -17,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.db.models import Q
 
-from core.models import Product, WeeklyDeal, Category
+from core.models import Product, WeeklyDeal, Category, Review
 
 from product import serializers
 
@@ -119,6 +119,24 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
             serializer.save(user=request.user, product=product)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(request=serializers.ReviewSerializer)
+    @action(detail=True, methods=['delete'], url_path='reviews/(?P<review_id>[^/.]+)')
+    def delete_review(self, request, pk=None, review_id=None):
+        """Delete a review for a product."""
+        product = self.get_object()
+
+        try:
+            review = Review.objects.get(id=review_id, product=product)
+        except Review.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the user is the owner of the review
+        if review.user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        review.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):

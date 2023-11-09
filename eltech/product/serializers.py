@@ -139,6 +139,11 @@ class ProductDetailSerializer(ProductSerializer):
         representation['average_rating'] = average_rating \
             if average_rating is not None else 0
         representation['reviews'] = representation.get('reviews', [])
+
+        # Add reviews count
+        reviews_count = instance.reviews.count()
+        representation['reviews_count'] = reviews_count
+
         return representation
 
 
