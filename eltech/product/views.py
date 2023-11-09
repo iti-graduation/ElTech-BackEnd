@@ -17,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.db.models import Q
 
-from core.models import Product, WeeklyDeal
+from core.models import Product, WeeklyDeal, Category
 
 from product import serializers
 
@@ -83,6 +83,20 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         """Return the serializer class for request."""
         if self.action == 'list':
             return serializers.ProductSerializer
+
+        return self.serializer_class
+
+
+class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """Views for manage category APIs."""
+
+    serializer_class = serializers.CategoryDetailSerializer
+    queryset = Category.objects.all()
+
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'list':
+            return serializers.CategorySerializer
 
         return self.serializer_class
 

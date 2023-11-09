@@ -153,7 +153,7 @@ class Product(models.Model):
     sale_amount = models.PositiveSmallIntegerField(default=0)
     is_featured = models.BooleanField(default=False)
     is_trending = models.BooleanField(default=False)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
 
     def __str__(self):
         return self.name

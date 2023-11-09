@@ -45,15 +45,6 @@ class ProductFeatureSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    """Serializer for categories."""
-
-    class Meta:
-        model = models.Category
-        fields = ['id', 'name']
-        read_only_fields = ['id']
-
-
 class ProductImageSerializer(serializers.ModelSerializer):
     """Serializer for product images."""
 
@@ -99,6 +90,23 @@ class ProductSerializer(serializers.ModelSerializer):
             representation['thumbnail'] = {}
 
         return representation
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """Serializer for categories."""
+
+    class Meta:
+        model = models.Category
+        fields = ['id', 'name', 'image']
+        read_only_fields = ['id']
+
+
+class CategoryDetailSerializer(CategorySerializer):
+    """Serializer for category detail view."""
+    products = ProductSerializer(many=True, read_only=True)
+
+    class Meta(CategorySerializer.Meta):
+        fields = ['id', 'name', 'products']
 
 
 class ProductDetailSerializer(ProductSerializer):
