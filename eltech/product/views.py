@@ -15,6 +15,8 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
+from django.db.models import Q
+
 from core.models import Product, WeeklyDeal
 
 from product import serializers
@@ -41,6 +43,11 @@ from product import serializers
                 enum=[0, 1],
                 description="Get popular products only.",
             ),
+            OpenApiParameter(
+                "q",
+                OpenApiTypes.STR,
+                description="Search products by name or description.",
+            ),
         ]
     )
 )
@@ -55,7 +62,11 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         is_featured = bool(int(self.request.query_params.get("is_featured", 0)))
         is_trending = bool(int(self.request.query_params.get("is_trending", 0)))
         is_popular = bool(int(self.request.query_params.get("is_popular", 0)))
+        query = self.request.query_params.get("q")
         queryset = self.queryset
+
+        if query:
+            queryset = queryset.filter(Q(name__icontains=query) | Q(description__icontains=query))
 
         if is_featured:
             queryset = queryset.filter(is_featured=True)
