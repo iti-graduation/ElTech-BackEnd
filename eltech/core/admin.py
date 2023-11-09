@@ -104,9 +104,19 @@ class ProductAdmin(admin.ModelAdmin):
     is_weekly_deal.boolean = True
 
 
+class ProductInline(admin.TabularInline):
+    model = models.Product
+    extra = 1
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    inlines = [ProductInline]
+    list_display = ['name']
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Product, ProductAdmin)
-admin.site.register(models.Category)
+admin.site.register(models.Category, CategoryAdmin)
 admin.site.register(models.WeeklyDeal)
 admin.site.register(models.Post)
 admin.site.register(models.Order)
