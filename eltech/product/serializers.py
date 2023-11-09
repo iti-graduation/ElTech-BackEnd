@@ -3,9 +3,7 @@ Serializers for product APIs
 """
 from rest_framework import serializers
 
-from core.models import (
-    Product,
-)
+from core.models import Product, WeeklyDeal
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -22,3 +20,13 @@ class ProductDetailSerializer(ProductSerializer):
 
     class Meta(ProductSerializer.Meta):
         fields = ProductSerializer.Meta.fields + ['description', 'stock']
+
+
+class WeeklyDealSerializer(serializers.ModelSerializer):
+    """Serializer for weekly deals."""
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = WeeklyDeal
+        fields = ['id', 'deal_time', 'product']
+        read_only_fields = ['id']

@@ -8,14 +8,14 @@ from drf_spectacular.utils import (
     OpenApiTypes,
 )
 
-from rest_framework import viewsets, mixins, status
+from rest_framework import views, viewsets, mixins, status
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Product
+from core.models import Product, WeeklyDeal
 
 from product import serializers
 
@@ -74,3 +74,12 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
             return serializers.ProductSerializer
 
         return self.serializer_class
+
+
+class WeeklyDealView(views.APIView):
+    """View for the weekly deal."""
+
+    def get(self, request):
+        weekly_deal = WeeklyDeal.objects.latest('deal_time')
+        serializer = serializers.WeeklyDealSerializer(weekly_deal)
+        return Response(serializer.data)

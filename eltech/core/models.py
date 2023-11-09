@@ -201,7 +201,7 @@ class ProductFeature(models.Model):
 
 
 class WeeklyDeal(models.Model):
-    time = models.TimeField()
+    deal_time = models.DateField(null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
 

@@ -14,4 +14,5 @@ app_name = 'product'
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('weekly-deal/', views.WeeklyDealView.as_view(), name='weekly-deal'),
 ]
