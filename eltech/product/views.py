@@ -86,6 +86,40 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
 
         return self.serializer_class
 
+    @extend_schema(request=serializers.ReviewSerializer)
+    @action(detail=True, methods=['post'])
+    def reviews(self, request, pk=None):
+        """Create a review for a product."""
+        product = self.get_object()
+        serializer = serializers.ReviewSerializer(data=request.data)
+
+        # Add authentication and permission checks
+        self.check_object_permissions(self.request, product)
+        self.authentication_classes = [TokenAuthentication]
+        self.permission_classes = [IsAuthenticated]
+
+        if serializer.is_valid():
+            serializer.save(user=request.user, product=product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(request=serializers.RatingSerializer)
+    @action(detail=True, methods=['post'])
+    def ratings(self, request, pk=None):
+        """Create a rating for a product."""
+        product = self.get_object()
+        serializer = serializers.RatingSerializer(data=request.data)
+
+        # Add authentication and permission checks
+        self.check_object_permissions(self.request, product)
+        self.authentication_classes = [TokenAuthentication]
+        self.permission_classes = [IsAuthenticated]
+
+        if serializer.is_valid():
+            serializer.save(user=request.user, product=product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """Views for manage category APIs."""
