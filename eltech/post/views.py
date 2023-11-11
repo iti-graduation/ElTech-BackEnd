@@ -23,15 +23,38 @@ from core.models import Comment , Post
 from post.serializers import *
 
 
-@extend_schema(
+@extend_schema_view(
+    list=extend_schema(parameters=[
+        OpenApiParameter(
+                "category_id",
+                OpenApiTypes.INT,
+                description="Search term for filtering posts by Category.",
+            ),
+            OpenApiParameter(
+                "user_id",
+                OpenApiTypes.INT,
+                description="Search term for filtering posts by User.",
+            ),
+            OpenApiParameter(
+                "search",
+                OpenApiTypes.STR,
+                description="Search term for filtering posts by title or content.",
+            ),
+    ]),
     description="List and create posts.",
     responses={200: PostSerializer(many=True)},
 )
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
+    queryset = Post.objects.all()
 
     def get_queryset(self):
-        queryset = Post.objects.all()
+        queryset = self.queryset
+
+        # Filter posts based on Search
+        query = self.request.query_params.get("search")
+        if query:
+            queryset = queryset.filter(Q(title__icontains=query) | Q(content__icontains=query))
 
         # Filter posts based on category
         category_id = self.request.query_params.get('category_id', None)
