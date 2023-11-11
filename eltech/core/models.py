@@ -290,6 +290,8 @@ class Comment(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
+    def __str__(self):
+        return f"by: {self.user.email}, id: {self.id}"
 
 class Service(models.Model):
     """Service object"""

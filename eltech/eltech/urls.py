@@ -38,6 +38,8 @@ urlpatterns = [
 
     path('api/accounts/', include('accounts.urls')),
     path('api/product/', include('product.urls')),
+    path('api/post/', include('post.urls')),
+
 ]
 
 if settings.DEBUG:
