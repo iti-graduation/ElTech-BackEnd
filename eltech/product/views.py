@@ -56,6 +56,7 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
 
     serializer_class = serializers.ProductDetailSerializer
     queryset = Product.objects.all()
+    authentication_classes = [TokenAuthentication]
 
     def get_queryset(self):
         """Filter queryset for products."""
@@ -79,6 +80,16 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
 
         return queryset
 
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['ratings', 'reviews']:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = []
+        return [permission() for permission in permission_classes]
+
     def get_serializer_class(self):
         """Return the serializer class for request."""
         if self.action == 'list':
@@ -93,11 +104,6 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         product = self.get_object()
         serializer = serializers.ReviewSerializer(data=request.data)
 
-        # Add authentication and permission checks
-        self.check_object_permissions(self.request, product)
-        self.authentication_classes = [TokenAuthentication]
-        self.permission_classes = [IsAuthenticated]
-
         if serializer.is_valid():
             serializer.save(user=request.user, product=product)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -109,11 +115,6 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         """Create a rating for a product."""
         product = self.get_object()
         serializer = serializers.RatingSerializer(data=request.data)
-
-        # Add authentication and permission checks
-        self.check_object_permissions(self.request, product)
-        self.authentication_classes = [TokenAuthentication]
-        self.permission_classes = [IsAuthenticated]
 
         if serializer.is_valid():
             serializer.save(user=request.user, product=product)
