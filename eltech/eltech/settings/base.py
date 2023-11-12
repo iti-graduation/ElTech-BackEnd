@@ -10,10 +10,12 @@ if os.path.isfile(dotenv_path):
     load_dotenv(dotenv_path)
 
 
-SECRET_KEY =os.environ.get('SECRET_KEY', 'django-insecure-pkg)2bqgp^0_(huo+9n1^1(r%e2m(kp!unn$s#_jn*!nrx@u+j')
-DEBUG =os.environ.get("DEBUG")
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY', 'django-insecure-pkg)2bqgp^0_(huo+9n1^1(r%e2m(kp!unn$s#_jn*!nrx@u+j')
+DEBUG = os.environ.get("DEBUG")
 
-ALLOWED_HOSTS =os.environ.get('ALLOWED_HOSTS').split(',') if os.environ.get('ALLOWED_HOSTS') else []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(
+    ',') if os.environ.get('ALLOWED_HOSTS') else []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,6 +29,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'core',
     'accounts',
+    'service'
 ]
 
 MIDDLEWARE = [
