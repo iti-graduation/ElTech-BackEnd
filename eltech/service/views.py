@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from core.models import Service
-from service import serializers  # Make sure this line is present
+from service import serializers  
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
