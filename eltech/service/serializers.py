@@ -3,6 +3,7 @@ Serialization of service app
 """
 from rest_framework import serializers
 from core.models import Service
+from rest_framework.exceptions import ValidationError
 
 
 class ServiceSerializer(serializers.ModelSerializer):

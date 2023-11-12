@@ -1,11 +1,10 @@
-# service/views.py
-
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
 
 from core.models import Service
-from service import serializers
+from service import serializers  # Make sure this line is present
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
@@ -24,4 +23,11 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new service"""
-        serializer.save(user=self.request.user)
+        title = serializer.validated_data['title']
+        existing_service = Service.objects.filter(title=title)
+
+        if existing_service.exists():
+            raise serializers.ValidationError(
+                "Service with this title already exists.")
+
+        serializer.save()
