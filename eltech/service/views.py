@@ -14,6 +14,11 @@ class ServiceViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action in ['retrieve', 'list']:
+            return [AllowAny()]
+        return super().get_permissions()
+
     def get_serializer_class(self):
         """Return the serializer class for request"""
         if self.action == 'list':
