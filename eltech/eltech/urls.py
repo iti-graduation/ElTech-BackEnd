@@ -41,8 +41,7 @@ urlpatterns = [
     path('api/post/', include('post.urls')),
     path('api/favorite/', include('favorite.urls')),
     path('api/service/', include('service.urls')),
-
-
+    path('api/cart/', include('cart.urls')),
 ]
 
 if settings.DEBUG:

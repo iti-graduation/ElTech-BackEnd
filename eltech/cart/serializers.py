@@ -10,16 +10,10 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     Serializer for the Product model.
     """
-    quantity = serializers.SerializerMethodField()
-
     class Meta:
         model = models.Product
-        fields = ['id', 'name', 'price', 'quantity']
+        fields = ['id', 'name', 'price']
         read_only_fields = ['id']
-
-    def get_quantity(self, instance):
-        cart_product = models.CartProduct.objects.get(product=instance, cart=self.context['cart'])
-        return cart_product.quantity
 
 
 class CartProductSerializer(serializers.ModelSerializer):
@@ -27,7 +21,7 @@ class CartProductSerializer(serializers.ModelSerializer):
     Serializer for the CartProduct model.
     Includes detailed product information.
     """
-    product = ProductSerializer(read_only=True)
+    product = serializers.PrimaryKeyRelatedField(queryset=models.Product.objects.all())
 
     class Meta:
         model = models.CartProduct
@@ -36,6 +30,7 @@ class CartProductSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation['product'] = ProductSerializer(instance.product, context=self.context).data
         return representation
 
 
@@ -48,8 +43,8 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Cart
-        fields = ['id', 'user', 'products', 'coupon']
-        read_only_fields = ['id']
+        fields = ['id', 'user', 'products']
+        read_only_fields = ['id', 'user']
 
     def to_representation(self, instance):
         """
@@ -68,4 +63,15 @@ class CouponSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Coupon
         fields = ['id', 'code', 'discount', 'uses_limit']
+        read_only_fields = ['id']
+
+
+class ApplyCouponSerializer(serializers.ModelSerializer):
+    """
+    Serializer for applying a coupon to a cart.
+    """
+
+    class Meta:
+        model = models.Cart
+        fields = ['id', 'user', 'products', 'coupon']
         read_only_fields = ['id']
