@@ -10,8 +10,23 @@ from core.models import (
 )
 
 
+class ProductSerializer(serializers.ModelSerializer):
+    """Serializer for products."""
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'price', 'stock', 'view_count', 'category'
+        ]
+        read_only_fields = ['id']
+
+
 class OrderProductSerializer(serializers.ModelSerializer):
     """Serializer for order products."""
+
+    # product = ProductSerializer()
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    # product = ProductSerializer(read_only=True)
 
     class Meta:
         model = OrderProduct
@@ -38,12 +53,20 @@ class OrderSerializer(serializers.ModelSerializer):
             )
             order.products.add(product_obj)
 
+    # def create(self, validated_data):
+    #     """Create an order"""
+    #     products = validated_data.pop("products", [])
+    #     order = Order.objects.create(**validated_data)
+    #     self._get_or_create_ingredients(products, order)
+
+    #     return order
+
     def create(self, validated_data):
         """Create an order"""
-        products = validated_data.pop("products", [])
+        products_data = validated_data.pop('products', [])
         order = Order.objects.create(**validated_data)
-        self._get_or_create_ingredients(products, order)
-
+        for product_data in products_data:
+            OrderProduct.objects.create(order=order, **product_data)
         return order
 
     def update(self, instance, validated_data):
