@@ -1,5 +1,5 @@
 """
-Views for the cart APIs.
+Views for the order APIs.
 """
 from drf_spectacular.utils import (
     extend_schema_view,
@@ -8,49 +8,72 @@ from drf_spectacular.utils import (
     OpenApiTypes,
 )
 
-from django.shortcuts import get_object_or_404
-
-from rest_framework import viewsets, mixins, status
+from rest_framework import (
+    viewsets,
+    mixins,
+    status,
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Order, OrderProduct, Product
-
-from order.serializers import OrderSerializer, OrderProductSerializer
+from core.models import (
+    Product,
+    Order,
+    OrderProduct,
+)
+from order import serializers
 
 
 class OrderViewSet(viewsets.ModelViewSet):
+    """View for manage order APIs."""
+
+    serializer_class = serializers.OrderSerializer
     queryset = Order.objects.all()
-    serializer_class = OrderSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        """Retrieve orders for authenticated user."""
         return self.queryset.filter(user=self.request.user)
 
-    @extend_schema(request=OrderProductSerializer)
-    @action(detail=True, methods=['post'])
-    def order_products(self, request, pk=None):
-        """Create a product for a order."""
-        order = self.get_object()
-        product = get_object_or_404(Product, id=request.data.get('product'))
-        quantity = int(request.data.get('quantity'))
+    # def get_serializer_class(self):
+    #     """Return the serializer class for request."""
+    #     if self.action == "list":
+    #         return serializers.RecipeSerializer
+    #     elif self.action == "upload_image":
+    #         return serializers.RecipeImageSerializer
+    #
+    #     return self.serializer_class
 
-        if product.stock < quantity:
-            return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        """Create a new order."""
+        serializer.save(user=self.request.user)
 
-        order_product, created = OrderProduct.objects.get_or_create(order=order, product=product)
-        if created:
-            order_product.quantity = quantity
-        else:
-            order_product.quantity += quantity
-
-        if order_product.quantity > product.stock:
-            return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
-
-        order_product.save()
-
-        serializer = OrderProductSerializer(order_product)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+# class OrderProductViewSet(
+#     mixins.DestroyModelMixin,
+#     mixins.UpdateModelMixin,
+#     mixins.ListModelMixin,
+#     viewsets.GenericViewSet,
+# ):
+#     """Base viewset for recipe attributes."""
+#
+#     authentication_classes = [TokenAuthentication]
+#     permission_classes = [IsAuthenticated]
+#
+#     def get_queryset(self):
+#         """Filter queryset for authenticated user."""
+#         assigned_only = bool(int(self.request.query_params.get("assigned_only", 0)))
+#         queryset = self.queryset
+#
+#         if assigned_only:
+#             queryset = queryset.filter(recipe__isnull=False)
+#
+#         return queryset.filter(user=self.request.user).order_by("-name").distinct()
+#
+# class IngredientViewSet(BaseRecipeAttributeViewSet):
+#     """Views for manage ingredients APIs."""
+#
+#     serializer_class = serializers.IngredientSerializer
+#     queryset = Ingredient.objects.all()

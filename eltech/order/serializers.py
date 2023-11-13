@@ -1,55 +1,68 @@
 """
-Serializers for order APIs
+Serializers for product APIs
 """
 from rest_framework import serializers
 
-from core.models import Product, Order, OrderProduct
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Product model.
-    """
-    class Meta:
-        model = Product
-        fields = ['id', 'name', 'price']
-        read_only_fields = ['id']
+from core.models import (
+    Product,
+    Order,
+    OrderProduct,
+)
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the OrderProduct model.
-    Includes detailed product information.
-    """
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    """Serializer for order products."""
 
     class Meta:
         model = OrderProduct
         fields = ['id', 'quantity', 'product']
-        read_only_fields = ['id']
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['product'] = ProductSerializer(instance.product, context=self.context).data
-        return representation
+        read_only_fields = ["id"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Order model.
-    Includes a list of products in the cart.
-    """
-    products = OrderProductSerializer(source='orderproduct_set', many=True, read_only=True)
+    """Serializer for orders."""
+    products = OrderProductSerializer(many=True, required=False)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'products']
-        read_only_fields = ['id', 'user']
+        fields = ['id', 'status', 'total_price', 'user', 'products']
+        read_only_fields = ['id']
 
-    def to_representation(self, instance):
-        """
-        Add total_price to serialized data.
-        """
-        representation = super().to_representation(instance)
-        representation['total_price'] = instance.total_price
-        return representation
+    def _get_or_create_products(self, products, order):
+        """Handle getting or creating products as needed."""
+        auth_user = self.context["request"].user
+        for product in products:
+            product_obj, created = OrderProduct.objects.get_or_create(
+                user=auth_user,
+                **product,
+            )
+            order.products.add(product_obj)
+
+    def create(self, validated_data):
+        """Create an order"""
+        products = validated_data.pop("products", [])
+        order = Order.objects.create(**validated_data)
+        self._get_or_create_ingredients(products, order)
+
+        return order
+
+    def update(self, instance, validated_data):
+        """Update an order."""
+        products = validated_data.pop("products", None)
+
+        if products is not None:
+            instance.products.clear()
+            self._get_or_create_products(products, instance)
+
+        for attribute, value in validated_data.items():
+            setattr(instance, attribute, value)
+
+        instance.save()
+        return instance
+
+
+class OrderDetailSerializer(OrderSerializer):
+    """Serializer for order detail view."""
+
+    class Meta(OrderSerializer.Meta):
+        fields = OrderSerializer.Meta.fields
