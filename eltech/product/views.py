@@ -154,10 +154,15 @@ class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
         return self.serializer_class
 
 
-class WeeklyDealView(views.APIView):
-    """View for the weekly deal."""
+class WeeklyDealViewSet(viewsets.GenericViewSet):
+    """Views for manage weekly deal APIs."""
 
-    def get(self, request):
+    serializer_class = serializers.WeeklyDealSerializer
+    queryset = WeeklyDeal.objects.all()
+
+    @action(detail=False, methods=['get'])
+    def latest(self, request):
+        """Retrieve the latest weekly deal."""
         weekly_deal = WeeklyDeal.objects.latest('deal_time')
-        serializer = serializers.WeeklyDealSerializer(weekly_deal)
+        serializer = self.get_serializer(weekly_deal)
         return Response(serializer.data)
