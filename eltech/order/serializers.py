@@ -82,10 +82,3 @@ class OrderSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
-
-class OrderDetailSerializer(OrderSerializer):
-    """Serializer for order detail view."""
-
-    class Meta(OrderSerializer.Meta):
-        fields = OrderSerializer.Meta.fields
