@@ -8,6 +8,8 @@ from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -270,12 +272,23 @@ class Order(models.Model):
                              on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through='OrderProduct')
 
+    @property
+    def total_price(self):
+        total = sum(cp.total_price for cp in self.orderproduct_set.all())
+        # if self.coupon:
+        #     total *= (1 - self.coupon.discount)
+        return total
+
 
 class OrderProduct(models.Model):
     """Order product object"""
     quantity = models.PositiveIntegerField(default=1)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    @property
+    def total_price(self):
+        return self.product.price * self.quantity
 
 
 class Post(models.Model):
