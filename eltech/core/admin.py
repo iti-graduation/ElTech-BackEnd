@@ -18,8 +18,19 @@ class UserAdmin(BaseUserAdmin):
             None,
             {
                 'fields': (
+                    'first_name',
+                    'last_name',
                     'email',
-                    'password'
+                    'email_confirmed',
+                    'password',
+                    'mobile_phone',
+                    'profile_picture',
+                    'birth_date',
+                    'country',
+                    'is_subscribed',
+                    'facebook_profile',
+                    'instagram_profile',
+                    'twitter_profile'
                 )
             }
         ),
@@ -61,9 +72,67 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
+class ProductImageInline(admin.TabularInline):
+    model = models.ProductImage
+    extra = 1
+
+
+class ProductFeatureInline(admin.TabularInline):
+    model = models.ProductFeature
+    extra = 1
+
+
+class RatingInline(admin.TabularInline):
+    model = models.Rating
+    extra = 1
+
+
+class ReviewInline(admin.TabularInline):
+    model = models.Review
+    extra = 1
+
+
+class ProductAdmin(admin.ModelAdmin):
+    inlines = [ProductImageInline, ProductFeatureInline, RatingInline, ReviewInline]
+    list_display = ('name', 'price', 'is_hot', 'is_on_sale', 'is_weekly_deal')
+    list_filter = ('is_hot', 'is_on_sale')
+
+    def is_weekly_deal(self, obj):
+        """Return whether the product is a weekly deal."""
+        return obj.weeklydeal_set.exists()
+
+    is_weekly_deal.boolean = True
+
+
+class ProductInline(admin.TabularInline):
+    model = models.Product
+    extra = 1
+
+
+class PostInline(admin.TabularInline):
+    model = models.Post
+    extra = 1
+    
+class CategoryAdmin(admin.ModelAdmin):
+    inlines = [ProductInline,PostInline]
+    list_display = ['name']
+
+
+class CommentInline(admin.TabularInline):
+    model = models.Comment
+    extra = 1
+    
+class PostAdmin(admin.ModelAdmin):
+    inlines=[CommentInline]
+    list_display = ('title', 'user', 'created_at', 'updated_at')  # Customize the displayed fields if needed
+    search_fields = ('title', 'content')  # Add fields you want to search
+    list_filter = ('user', 'created_at')
+
+
 admin.site.register(models.User, UserAdmin)
-admin.site.register(models.Product)
-admin.site.register(models.Category)
-admin.site.register(models.Post)
+admin.site.register(models.Product, ProductAdmin)
+admin.site.register(models.Category, CategoryAdmin)
+admin.site.register(models.WeeklyDeal)
+admin.site.register(models.Post,PostAdmin)
 admin.site.register(models.Order)
 admin.site.register(models.Cart)

@@ -8,6 +8,8 @@ from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -103,7 +105,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True
     )
     birth_date = models.DateField(null=True, blank=True)
-    name = models.CharField(max_length=255)
+    # name = models.CharField(max_length=255)
     country = models.CharField(max_length=50, null=True, blank=True)
     facebook_profile = models.URLField(null=True, blank=True)
     instagram_profile = models.URLField(null=True, blank=True)
@@ -120,6 +122,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+    @property
+    def name(self):
+        """Returns the full name of the user."""
+
+        return f'{self.first_name} {self.last_name}'
 
 
 class Category(models.Model):
@@ -147,7 +155,8 @@ class Product(models.Model):
     sale_amount = models.PositiveSmallIntegerField(default=0)
     is_featured = models.BooleanField(default=False)
     is_trending = models.BooleanField(default=False)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category')
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, related_name='products')
 
     def __str__(self):
         return self.name
@@ -162,7 +171,8 @@ class Rating(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
 
@@ -171,16 +181,23 @@ class Review(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='reviews')
 
 
 class ProductImage(models.Model):
     """Product image object"""
     image = models.ImageField(upload_to=product_image_file_path)
+    is_thumbnail = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='images')
+
+    def __str__(self):
+        return self.image.url
 
 
 class ProductFeature(models.Model):
@@ -188,20 +205,22 @@ class ProductFeature(models.Model):
     feature = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='features')
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='features')
 
     def __str__(self):
         return self.feature
 
 
 class WeeklyDeal(models.Model):
-    time = models.TimeField()
+    deal_time = models.DateField(null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
 
 class Favorite(models.Model):
     """Favorite product object"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
 
@@ -214,9 +233,11 @@ class Coupon(models.Model):
 
 class Cart(models.Model):
     """Cart object"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through='CartProduct')
-    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
+    coupon = models.ForeignKey(
+        Coupon, on_delete=models.SET_NULL, null=True, blank=True)
 
     @property
     def total_price(self):
@@ -244,10 +265,19 @@ class Order(models.Model):
         ('shipped', 'Shipped'),
         ('delivered', 'Delivered'),
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending')
     total_price = models.DecimalField(max_digits=5, decimal_places=2)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through='OrderProduct')
+
+    @property
+    def total_price(self):
+        total = sum(cp.total_price for cp in self.orderproduct_set.all())
+        # if self.coupon:
+        #     total *= (1 - self.coupon.discount)
+        return total
 
 
 class OrderProduct(models.Model):
@@ -255,6 +285,10 @@ class OrderProduct(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    @property
+    def total_price(self):
+        return self.product.price * self.quantity
 
 
 class Post(models.Model):
@@ -264,7 +298,8 @@ class Post(models.Model):
     image = models.ImageField(upload_to=post_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -276,9 +311,15 @@ class Comment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    post = models.ForeignKey(
+        Post, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+
+    def __str__(self):
+        return f"by: {self.user.email}, id: {self.id}"
 
 
 class Service(models.Model):

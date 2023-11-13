@@ -10,10 +10,12 @@ if os.path.isfile(dotenv_path):
     load_dotenv(dotenv_path)
 
 
-SECRET_KEY =os.environ.get('SECRET_KEY', 'django-insecure-pkg)2bqgp^0_(huo+9n1^1(r%e2m(kp!unn$s#_jn*!nrx@u+j')
-DEBUG =os.environ.get("DEBUG")
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY', 'django-insecure-pkg)2bqgp^0_(huo+9n1^1(r%e2m(kp!unn$s#_jn*!nrx@u+j')
+DEBUG = os.environ.get("DEBUG")
 
-ALLOWED_HOSTS =os.environ.get('ALLOWED_HOSTS').split(',') if os.environ.get('ALLOWED_HOSTS') else []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(
+    ',') if os.environ.get('ALLOWED_HOSTS') else []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -22,13 +24,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
+    'core',
+    'accounts',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -90,6 +95,9 @@ STATIC_ROOT = '/vol/web/static'
 MEDIA_ROOT = '/vol/web/media'
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
 }
 

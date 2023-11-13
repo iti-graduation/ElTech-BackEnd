@@ -32,9 +32,17 @@ urlpatterns = [
 
     path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
     path('api/docs/',
-        SpectacularSwaggerView.as_view(url_name='api-schema'),
-        name='api-docs'
-    ),
+         SpectacularSwaggerView.as_view(url_name='api-schema'),
+         name='api-docs'
+         ),
+
+    path('api/accounts/', include('accounts.urls')),
+    path('api/product/', include('product.urls')),
+    path('api/post/', include('post.urls')),
+    path('api/favorite/', include('favorite.urls')),
+    path('api/service/', include('service.urls')),
+    path('api/cart/', include('cart.urls')),
+    path('api/order/', include('order.urls')),
 ]
 
 if settings.DEBUG:
