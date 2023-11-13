@@ -86,6 +86,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 class VerifyEmailView(APIView):
+    
     def get(self, request, uidb64, token):
         try:
             # Decode the uid
@@ -191,7 +192,7 @@ class UnSubscribeView(APIView):
             try:
                 # Check if user already exists
                 user = User.objects.get(email=email)
-                
+
                 if user.is_subscribed:
                     user.is_subscribed = False
                     user.save()

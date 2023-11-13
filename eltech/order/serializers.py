@@ -22,16 +22,15 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
-    """Serializer for order products."""
-
-    # product = ProductSerializer()
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
-    # product = ProductSerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(), write_only=True, source='product')
 
     class Meta:
         model = OrderProduct
-        fields = ['id', 'quantity', 'product']
+        fields = ['id', 'quantity', 'product', 'product_id']
         read_only_fields = ["id"]
+
 
 
 class OrderSerializer(serializers.ModelSerializer):
