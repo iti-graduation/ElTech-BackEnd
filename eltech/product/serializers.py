@@ -62,10 +62,16 @@ class ProductThumbnailSerializer(serializers.ModelSerializer):
         fields = ['image']
         read_only_fields = ['image']
 
+    # def to_representation(self, instance):
+    #     """Only return the image if it is a thumbnail."""
+    #     if instance.is_thumbnail:
+    #         return {'image': self.context['request'].build_absolute_uri(instance.image.url)}
+    #     return {}
     def to_representation(self, instance):
         """Only return the image if it is a thumbnail."""
-        if instance.is_thumbnail:
-            return {'image': self.context['request'].build_absolute_uri(instance.image.url)}
+        request = self.context.get('request')
+        if request and instance.is_thumbnail:
+            return {'image': request.build_absolute_uri(instance.image.url)}
         return {}
 
 
@@ -147,6 +153,15 @@ class ProductDetailSerializer(ProductSerializer):
         return representation
 
 
+# class WeeklyDealSerializer(serializers.ModelSerializer):
+#     """Serializer for weekly deals."""
+#     product = ProductSerializer(read_only=True)
+#
+#     class Meta:
+#         model = models.WeeklyDeal
+#         fields = ['id', 'deal_time', 'product']
+#         read_only_fields = ['id']
+
 class WeeklyDealSerializer(serializers.ModelSerializer):
     """Serializer for weekly deals."""
     product = ProductSerializer(read_only=True)
@@ -155,3 +170,15 @@ class WeeklyDealSerializer(serializers.ModelSerializer):
         model = models.WeeklyDeal
         fields = ['id', 'deal_time', 'product']
         read_only_fields = ['id']
+
+    def to_representation(self, instance):
+        """Add product to serialized data."""
+        representation = super().to_representation(instance)
+
+        product = ProductSerializer(instance.product, context=self.context).data
+        print(product)
+        representation['product'] = product
+
+        return representation
+
+
