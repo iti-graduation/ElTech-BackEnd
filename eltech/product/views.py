@@ -14,12 +14,18 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.filters import OrderingFilter
+from rest_framework.pagination import PageNumberPagination
 
 from django.db.models import Q
 
 from core.models import Product, WeeklyDeal, Category, Review
 
 from product import serializers
+
+
+class ProductPagination(PageNumberPagination):
+    page_size = 12
 
 
 @extend_schema_view(
@@ -57,12 +63,16 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
     serializer_class = serializers.ProductDetailSerializer
     queryset = Product.objects.all()
     authentication_classes = [TokenAuthentication]
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['price']
+    pagination_class = ProductPagination
 
     def get_queryset(self):
         """Filter queryset for products."""
         is_featured = bool(int(self.request.query_params.get("is_featured", 0)))
         is_trending = bool(int(self.request.query_params.get("is_trending", 0)))
         is_popular = bool(int(self.request.query_params.get("is_popular", 0)))
+        # ordering = self.request.query_params.get("ordering", 0)
         query = self.request.query_params.get("q")
         queryset = self.queryset
 
