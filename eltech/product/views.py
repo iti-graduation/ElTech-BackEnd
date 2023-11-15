@@ -57,14 +57,16 @@ class ProductPagination(PageNumberPagination):
         ]
     )
 )
-class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ProductViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     """Views for manage product APIs."""
 
     serializer_class = serializers.ProductDetailSerializer
     queryset = Product.objects.all()
     authentication_classes = [TokenAuthentication]
     filter_backends = [OrderingFilter]
-    ordering_fields = ['price']
+    ordering_fields = ["price"]
     pagination_class = ProductPagination
 
     def get_queryset(self):
@@ -74,10 +76,12 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         is_popular = bool(int(self.request.query_params.get("is_popular", 0)))
         # ordering = self.request.query_params.get("ordering", 0)
         query = self.request.query_params.get("q")
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related('ratings')
 
         if query:
-            queryset = queryset.filter(Q(name__icontains=query) | Q(description__icontains=query))
+            queryset = queryset.filter(
+                Q(name__icontains=query) | Q(description__icontains=query)
+            )
 
         if is_featured:
             queryset = queryset.filter(is_featured=True)
@@ -86,7 +90,7 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
             queryset = queryset.filter(is_trending=True)
 
         if is_popular:
-            queryset = queryset.order_by('-view_count')
+            queryset = queryset.order_by("-view_count")
 
         return queryset
 
@@ -94,7 +98,7 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.action in ['ratings', 'reviews']:
+        if self.action in ["ratings", "reviews"]:
             permission_classes = [IsAuthenticated]
         else:
             permission_classes = []
@@ -102,13 +106,21 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
-        if self.action == 'list':
+        if self.action == "list":
             return serializers.ProductSerializer
 
         return self.serializer_class
 
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a product and increment the views_count."""
+        instance = self.get_object()
+        instance.view_count += 1
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     @extend_schema(request=serializers.ReviewSerializer)
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def reviews(self, request, pk=None):
         """Create a review for a product."""
         product = self.get_object()
@@ -120,7 +132,7 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(request=serializers.RatingSerializer)
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def ratings(self, request, pk=None):
         """Create a rating for a product."""
         product = self.get_object()
@@ -132,7 +144,7 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(request=serializers.ReviewSerializer)
-    @action(detail=True, methods=['delete'], url_path='reviews/(?P<review_id>[^/.]+)')
+    @action(detail=True, methods=["delete"], url_path="reviews/(?P<review_id>[^/.]+)")
     def delete_review(self, request, pk=None, review_id=None):
         """Delete a review for a product."""
         product = self.get_object()
@@ -150,7 +162,9 @@ class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class CategoryViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     """Views for manage category APIs."""
 
     serializer_class = serializers.CategoryDetailSerializer
@@ -158,7 +172,7 @@ class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
-        if self.action == 'list':
+        if self.action == "list":
             return serializers.CategorySerializer
 
         return self.serializer_class
@@ -170,9 +184,9 @@ class WeeklyDealViewSet(viewsets.GenericViewSet):
     serializer_class = serializers.WeeklyDealSerializer
     queryset = WeeklyDeal.objects.all()
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def latest(self, request):
         """Retrieve the latest weekly deal."""
-        weekly_deal = WeeklyDeal.objects.latest('deal_time')
+        weekly_deal = WeeklyDeal.objects.latest("deal_time")
         serializer = self.get_serializer(weekly_deal)
         return Response(serializer.data)

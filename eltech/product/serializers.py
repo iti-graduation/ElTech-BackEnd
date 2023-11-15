@@ -2,6 +2,7 @@
 Serializers for product APIs
 """
 from rest_framework import serializers
+from rest_framework.pagination import PageNumberPagination
 
 from django.db.models import Avg
 
@@ -13,8 +14,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ['id', 'email', 'first_name', 'last_name']
-        read_only_fields = ['id', 'email', 'first_name', 'last_name']
+        fields = ['id', 'email', 'first_name', 'last_name', 'profile_picture']
+        read_only_fields = ['id', 'email', 'first_name', 'last_name', 'profile_picture']
 
 
 class RatingSerializer(serializers.ModelSerializer):
@@ -22,7 +23,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Rating
-        fields = ['id', 'rating']
+        fields = ['id', 'rating', 'user']
         read_only_fields = ['id']
 
 
@@ -50,8 +51,8 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.ProductImage
-        fields = ['image']
-        read_only_fields = ['image']
+        fields = ['id', 'image']
+        read_only_fields = ['id', 'image']
 
 
 class ProductThumbnailSerializer(serializers.ModelSerializer):
@@ -82,7 +83,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product
         fields = ['id', 'name', 'price', 'is_hot', 'is_on_sale',
-                  'sale_amount', 'thumbnail']
+                  'sale_amount', 'thumbnail', 'description']
         read_only_fields = ['id']
 
     def to_representation(self, instance):
@@ -106,13 +107,45 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'image']
         read_only_fields = ['id']
 
+class CustomPagination(PageNumberPagination):
+    page_size = 10
+
+    def get_paginated_response(self, data):
+        return {
+            'links': {
+                'next': self.get_next_link(),
+                'previous': self.get_previous_link()
+            },
+            'count': self.page.paginator.count,
+            'results': data
+        }
+
+# class CategoryDetailSerializer(CategorySerializer):
+#     """Serializer for category detail view."""
+#     products = ProductSerializer(many=True, read_only=True)
+
+#     class Meta(CategorySerializer.Meta):
+#         fields = ['id', 'name', 'products']
 
 class CategoryDetailSerializer(CategorySerializer):
     """Serializer for category detail view."""
-    products = ProductSerializer(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+        paginator = CustomPagination()
+        paginator.page_size = 5  # Set the number of items per page here
+
+        # Apply the pagination
+        products = paginator.paginate_queryset(instance.products.all(), request)
+        serializer = ProductSerializer(products, many=True, context={'request': request})
+
+        # Add the paginated results to the representation
+        representation['products'] = paginator.get_paginated_response(serializer.data)
+        return representation
 
     class Meta(CategorySerializer.Meta):
-        fields = ['id', 'name', 'products']
+        fields = ['id', 'name', 'image', 'products']
 
 
 class ProductDetailSerializer(ProductSerializer):
@@ -125,7 +158,7 @@ class ProductDetailSerializer(ProductSerializer):
 
     class Meta(ProductSerializer.Meta):
         fields = ProductSerializer.Meta.fields + [
-            'description', 'stock', 'features', 'ratings', 'reviews',
+            'stock', 'features', 'ratings', 'reviews',
             'category', 'images'
         ]
 
@@ -139,7 +172,10 @@ class ProductDetailSerializer(ProductSerializer):
         else:
             representation['thumbnail'] = {}
 
-        average_rating = instance.rating_set.aggregate(
+        # average_rating = instance.rating_set.aggregate(
+        #     average_rating=Avg('rating')
+        # )['average_rating']
+        average_rating = instance.ratings.aggregate(
             average_rating=Avg('rating')
         )['average_rating']
         representation['average_rating'] = average_rating \
