@@ -54,6 +54,11 @@ class ProductPagination(PageNumberPagination):
                 OpenApiTypes.STR,
                 description="Search products by name or description.",
             ),
+            OpenApiParameter(
+                "category",
+                OpenApiTypes.INT,
+                description="Get products according to category id.",
+            ),
         ]
     )
 )
@@ -74,9 +79,13 @@ class ProductViewSet(
         is_featured = bool(int(self.request.query_params.get("is_featured", 0)))
         is_trending = bool(int(self.request.query_params.get("is_trending", 0)))
         is_popular = bool(int(self.request.query_params.get("is_popular", 0)))
+        category = self.request.query_params.get('category', None)
         # ordering = self.request.query_params.get("ordering", 0)
         query = self.request.query_params.get("q")
         queryset = self.queryset.prefetch_related('ratings')
+
+        if category is not None:
+            queryset = queryset.filter(category__id=category)
 
         if query:
             queryset = queryset.filter(
