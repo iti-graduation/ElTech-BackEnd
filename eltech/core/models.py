@@ -243,7 +243,7 @@ class Cart(models.Model):
     def total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
         if self.coupon:
-            total *= (1 - self.coupon.discount)
+            total *= (1 - self.coupon.discount/100)
         return total
 
 
