@@ -27,7 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Product
-        fields = ['id', 'name', 'price', 'thumbnail']
+        fields = ['id', 'name', 'price', 'stock', 'thumbnail']
         read_only_fields = ['id']
 
     def to_representation(self, instance):
@@ -57,6 +57,7 @@ class CartProductSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation['total_price'] = instance.total_price
         representation['product'] = ProductSerializer(instance.product, context=self.context).data
         return representation
 

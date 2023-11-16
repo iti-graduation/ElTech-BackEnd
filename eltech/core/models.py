@@ -173,7 +173,7 @@ class Rating(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')
 
 
 class Review(models.Model):
@@ -243,7 +243,7 @@ class Cart(models.Model):
     def total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
         if self.coupon:
-            total *= (1 - self.coupon.discount)
+            total *= (1 - self.coupon.discount/100)
         return total
 
 

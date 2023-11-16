@@ -17,8 +17,7 @@ from core.models import Cart, CartProduct, Coupon, Order, OrderProduct, Product
 from cart import serializers
 
 
-class CartViewSet(mixins.DestroyModelMixin, 
-                  mixins.CreateModelMixin,
+class CartViewSet(mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     """
     Viewset for the Cart model.
@@ -31,22 +30,23 @@ class CartViewSet(mixins.DestroyModelMixin,
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
     
-    def perform_create(self, serializer):
-        """Create a new order."""
-        serializer.save(user=self.request.user)
-    
     @action(detail=False, methods=['get'])
     def get_cart(self, request):
         """get user's cart."""
         cart = Cart.objects.get(user=request.user)
-        serializer = serializers.CartSerializer(cart)
+        serializer = serializers.CartSerializer(cart, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(request=serializers.CartProductSerializer)
-    @action(detail=False, methods=['post'], url_path='products')
-    def add_cart_products(self, request, pk=None):
-        """Create a product for a cart."""
-        cart = Cart.objects.get(user=request.user)
+    @action(detail=False, methods=['post'], url_path='add_product')
+    def add(self, request, pk=None):
+        """Create or update a cart product."""
+        
+        if not Cart.objects.filter(user=request.user).exists():
+            cart =Cart.objects.create(user=request.user)
+        else:
+            cart =Cart.objects.get(user=request.user)
+
         product = get_object_or_404(Product, id=request.data.get('product'))
         quantity = int(request.data.get('quantity'))
 
@@ -57,38 +57,58 @@ class CartViewSet(mixins.DestroyModelMixin,
         if created:
             cart_product.quantity = quantity
         else:
-            cart_product.quantity += quantity
+            cart_product.quantity += 1
 
         if cart_product.quantity > product.stock:
             return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
 
         cart_product.save()
 
-        serializer = serializers.CartProductSerializer(cart_product)
+        serializer = serializers.CartProductSerializer(cart_product, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     @extend_schema(request=serializers.CartProductSerializer)
-    @action(detail=False, methods=['patch'], url_path='products')
-    def update_cart_products(self, request, pk=None):
-        """update a product for a cart."""
+    @action(detail=False, methods=['patch'], url_path='update_product')
+    def update_cart_product(self, request, pk=None):
+        """update cart product."""
+        
+        
         cart = Cart.objects.get(user=request.user)
+
         product = get_object_or_404(Product, id=request.data.get('product'))
         quantity = int(request.data.get('quantity'))
 
         if product.stock < quantity:
             return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
 
-        cart_product, created = CartProduct.objects.get_or_create(cart=cart, product=product)
-        
-        cart_product.quantity = quantity
-
+        cart_product = CartProduct.objects.get(cart=cart, product=product)
+        if quantity == 0:
+            cart_product.quantity = 1
+        else:
+            cart_product.quantity = quantity
+    
         if cart_product.quantity > product.stock:
+            cart_product.quantity = product.stock
             return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
 
         cart_product.save()
 
-        serializer = serializers.CartProductSerializer(cart_product)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = serializers.CartProductSerializer(cart_product, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @extend_schema(request=serializers.CartProductSerializer)
+    @action(detail=False, methods=['get'], url_path='product/(?P<product_id>[^/.]+)')
+    def get_cart_product(self, request, product_id=None):
+        """
+        retrive a product from cart.
+        """
+        cart = Cart.objects.get(user=request.user)
+
+        product = Product.objects.get(id=product_id, cart=cart)
+        cartProduct = CartProduct.objects.get(product=product, cart=cart)
+
+        serializer = serializers.CartProductSerializer(cartProduct, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(request=serializers.CartProductSerializer)
     @action(detail=False, methods=['delete'], url_path='products/(?P<product_id>[^/.]+)')
@@ -105,9 +125,9 @@ class CartViewSet(mixins.DestroyModelMixin,
 
         product.delete()
 
-        # # Delete the cart if it's empty
-        # if not cart.products.exists():
-        #     cart.delete()
+        # Delete the cart if it's empty
+        if not cart.products.exists():
+            cart.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
