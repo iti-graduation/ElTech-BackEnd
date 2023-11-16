@@ -38,8 +38,8 @@ class CartViewSet(mixins.DestroyModelMixin,
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(request=serializers.CartProductSerializer)
-    @action(detail=False, methods=['post'], url_path='products')
-    def cart_products(self, request, pk=None):
+    @action(detail=False, methods=['post'], url_path='add_product')
+    def add(self, request, pk=None):
         """Create or update a cart product."""
         
         if not Cart.objects.filter(user=request.user).exists():
@@ -57,10 +57,7 @@ class CartViewSet(mixins.DestroyModelMixin,
         if created:
             cart_product.quantity = quantity
         else:
-            if quantity == 1:
-                cart_product.quantity += quantity
-            else:
-                cart_product.quantity = quantity
+            cart_product.quantity += 1
 
         if cart_product.quantity > product.stock:
             return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
@@ -70,6 +67,48 @@ class CartViewSet(mixins.DestroyModelMixin,
         serializer = serializers.CartProductSerializer(cart_product, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
+    @extend_schema(request=serializers.CartProductSerializer)
+    @action(detail=False, methods=['patch'], url_path='update_product')
+    def update_cart_product(self, request, pk=None):
+        """update cart product."""
+        
+        
+        cart = Cart.objects.get(user=request.user)
+
+        product = get_object_or_404(Product, id=request.data.get('product'))
+        quantity = int(request.data.get('quantity'))
+
+        if product.stock < quantity:
+            return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart_product = CartProduct.objects.get(cart=cart, product=product)
+        if quantity == 0:
+            cart_product.quantity = 1
+        else:
+            cart_product.quantity = quantity
+    
+        if cart_product.quantity > product.stock:
+            cart_product.quantity = product.stock
+            return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart_product.save()
+
+        serializer = serializers.CartProductSerializer(cart_product, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @extend_schema(request=serializers.CartProductSerializer)
+    @action(detail=False, methods=['get'], url_path='product/(?P<product_id>[^/.]+)')
+    def get_cart_product(self, request, product_id=None):
+        """
+        retrive a product from cart.
+        """
+        cart = Cart.objects.get(user=request.user)
+
+        product = Product.objects.get(id=product_id, cart=cart)
+        cartProduct = CartProduct.objects.get(product=product, cart=cart)
+
+        serializer = serializers.CartProductSerializer(cartProduct, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(request=serializers.CartProductSerializer)
     @action(detail=False, methods=['delete'], url_path='products/(?P<product_id>[^/.]+)')
