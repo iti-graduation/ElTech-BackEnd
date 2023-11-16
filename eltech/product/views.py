@@ -27,6 +27,15 @@ from product import serializers
 class ProductPagination(PageNumberPagination):
     page_size = 12
 
+    def get_paginated_response(self, data):
+        return Response({
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'count': self.page.paginator.count,
+            'page_number': self.page.number,  # Add this line
+            'results': data,
+        })
+
 
 @extend_schema_view(
     list=extend_schema(

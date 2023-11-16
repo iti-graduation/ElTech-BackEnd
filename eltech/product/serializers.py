@@ -24,7 +24,7 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Rating
         fields = ['id', 'rating', 'user']
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'user']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
