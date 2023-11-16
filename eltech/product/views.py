@@ -99,7 +99,7 @@ class ProductViewSet(
             queryset = queryset.filter(is_trending=True)
 
         if is_popular:
-            queryset = queryset.order_by("-view_count")
+            queryset = queryset.order_by('-view_count')[:12]
 
         return queryset
 
