@@ -31,7 +31,8 @@ class UserSerializer(serializers.ModelSerializer):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
         # Create verification link
-        verify_link = reverse('accounts:verify-email', args=[uid, token])
+        # verify_link = reverse('accounts:verify-email', args=[uid, token])
+        verify_link = f"http://localhost:3000/verify-email/{uid}/{token}"
 
         # Email content
         subject = 'Verify your account'
@@ -110,3 +111,7 @@ class UnSubscribeSerializer(serializers.Serializer):
         if User.objects.filter(email=value, is_subscribed=False).exists():
             raise serializers.ValidationError("This email is not subscribed.")
         return value
+
+
+class VerifyEmailRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()

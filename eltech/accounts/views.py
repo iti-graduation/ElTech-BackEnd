@@ -4,6 +4,7 @@ from django.urls import reverse
 from rest_framework import generics, authentication, permissions
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+from rest_framework.decorators import api_view
 
 from .serializers import (
     UserSerializer,
@@ -11,7 +12,8 @@ from .serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     SubscribeSerializer,
-    UnSubscribeSerializer
+    UnSubscribeSerializer,
+    VerifyEmailRequestSerializer,
 )
 
 from django.contrib.auth.tokens import default_token_generator
@@ -24,6 +26,7 @@ from django.core.mail import send_mail
 from rest_framework import status, views
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 import logging
 logger = logging.getLogger(__name__)
@@ -122,9 +125,11 @@ class PasswordResetRequestView(generics.GenericAPIView):
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
 
                 # Create reset link
-                reset_link = request.build_absolute_uri(
-                    reverse('accounts:password-reset-confirm', args=[uid, token])
-                )
+                # reset_link = request.build_absolute_uri(
+                #     reverse('accounts:password-reset-confirm', args=[uid, token])
+                # )
+                # Create reset link
+                reset_link = f"http://localhost:3000/reset-password/{uid}/{token}"
 
                 # Send email
                 subject = "Password Reset Requested"
@@ -200,3 +205,31 @@ class UnSubscribeView(APIView):
             except User.DoesNotExist:
                 return Response({"message": "You have not subscribed before!"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyEmailView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = VerifyEmailRequestSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = User.objects.filter(email=email).first()
+            if user:
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                # Create verification link
+                verification_link = f"http://localhost:3000/verify-email/{uid}/{token}"
+
+                # Send email
+                subject = "Email Verification Requested"
+                message = f"Please follow this link to verify your email: {verification_link}"
+                from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                send_mail(subject, message, from_email, [user.email])
+
+        # Always return the same message whether the user exists or not
+        # to prevent data leakage
+        return Response({"message": "If an account with the email exists, a verification link has been sent."}, status=status.HTTP_200_OK)
