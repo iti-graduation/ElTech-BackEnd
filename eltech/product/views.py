@@ -233,7 +233,10 @@ class WeeklyDealViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
     @action(detail=False, methods=["get"])
     def latest(self, request):
         """Retrieve the latest weekly deal."""
-        weekly_deal = WeeklyDeal.objects.latest("deal_time")
+        try:
+            weekly_deal = WeeklyDeal.objects.latest("deal_time")
+        except WeeklyDeal.DoesNotExist:
+            return Response({"detail": "No weekly deal available"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(weekly_deal)
         return Response(serializer.data)
 
