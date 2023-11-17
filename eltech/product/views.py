@@ -19,7 +19,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from django.db.models import Q
 
-from core.models import Product, WeeklyDeal, Category, Review
+from core.models import Product, WeeklyDeal, Category, Review, ProductFeature, ProductImage
 
 from product import serializers
 
@@ -71,9 +71,7 @@ class ProductPagination(PageNumberPagination):
         ]
     )
 )
-class ProductViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
-):
+class ProductViewSet(viewsets.ModelViewSet):
     """Views for manage product APIs."""
 
     serializer_class = serializers.ProductDetailSerializer
@@ -126,6 +124,9 @@ class ProductViewSet(
         """Return the serializer class for request."""
         if self.action == "list":
             return serializers.ProductSerializer
+        
+        if self.action == 'create':
+            return serializers.ProductCreateSerializer
 
         return self.serializer_class
 
@@ -136,6 +137,17 @@ class ProductViewSet(
         instance.save()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+    
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        serializer.save()
 
     @extend_schema(request=serializers.ReviewSerializer)
     @action(detail=True, methods=["post"])
@@ -178,11 +190,27 @@ class ProductViewSet(
 
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=True, methods=['post'])
+    def upload_image(self, request, pk=None):
+        product = self.get_object()
+        serializer = serializers.ProductImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(product=product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def add_feature(self, request, pk=None):
+        product = self.get_object()
+        serializer = serializers.ProductFeatureSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(product=product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CategoryViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
-):
+class CategoryViewSet(viewsets.ModelViewSet):
     """Views for manage category APIs."""
 
     serializer_class = serializers.CategoryDetailSerializer
@@ -196,7 +224,7 @@ class CategoryViewSet(
         return self.serializer_class
 
 
-class WeeklyDealViewSet(viewsets.GenericViewSet):
+class WeeklyDealViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
     """Views for manage weekly deal APIs."""
 
     serializer_class = serializers.WeeklyDealSerializer
@@ -208,3 +236,95 @@ class WeeklyDealViewSet(viewsets.GenericViewSet):
         weekly_deal = WeeklyDeal.objects.latest("deal_time")
         serializer = self.get_serializer(weekly_deal)
         return Response(serializer.data)
+
+
+# class ProductImageUploadView(views.APIView):
+#     def post(self, request, *args, **kwargs):
+#         print(request.data)
+#         product_id = kwargs.get('product_id')
+#         product = Product.objects.get(id=product_id)
+#         serializer = serializers.ProductImageSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(product=product)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class ProductFeatureAddView(views.APIView):
+#     def post(self, request, *args, **kwargs):
+#         print(request.data)
+#         product_id = kwargs.get('product_id')
+#         product = Product.objects.get(id=product_id)
+#         serializer = serializers.ProductFeatureSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(product=product)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProductFeatureViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """Views for manage product features APIs."""
+
+    serializer_class = serializers.ProductFeatureCreateSerializer
+    queryset = ProductFeature.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        product_id = request.data.get('product_id')
+        feature = request.data.get('feature')
+
+        if not product_id or not feature:
+            return Response({"detail": "product_id and feature are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND)
+
+        product_feature = ProductFeature.objects.create(product=product, feature=feature)
+
+        serializer = self.get_serializer(product_feature)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+
+class ProductImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """ViewSet for product images API."""
+
+    serializer_class = serializers.ProductImageCreateSerializer
+    queryset = ProductImage.objects.all()
+
+    # def create(self, request, *args, **kwargs):
+    #     print(request.data)
+    #     serializer = self.get_serializer(data=request.data)
+    #     if serializer.is_valid():
+    #         product_id = serializer.validated_data.pop('product_id')
+    #         product = Product.objects.get(id=product_id)
+    #         image = ProductImage.objects.create(product=product, **serializer.validated_data)
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # def create(self, request, *args, **kwargs):
+    #     print(request.data)
+    #     serializer = self.get_serializer(data=request.data)
+    #     if serializer.is_valid():
+    #         product = serializer.validated_data.get('product')
+    #         image = ProductImage.objects.create(product=product, **serializer.validated_data)
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def create(self, request, *args, **kwargs):
+        product_id = request.data.get('product_id')
+        image = request.data.get('image')
+
+        if not product_id or not image:
+            return Response({"detail": "product_id and image are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND)
+
+        product_image = ProductImage.objects.create(product=product, image=image)
+
+        serializer = self.get_serializer(product_image)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
