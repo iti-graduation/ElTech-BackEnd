@@ -26,7 +26,6 @@ from django.core.mail import send_mail
 from rest_framework import status, views
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 
 import logging
 logger = logging.getLogger(__name__)
@@ -88,26 +87,26 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
         return self.request.user
 
-class VerifyEmailView(APIView):
+# class VerifyEmailView(APIView):
     
-    def get(self, request, uidb64, token):
-        try:
-            # Decode the uid
-            uid = urlsafe_base64_decode(uidb64).decode()
-            user = User.objects.get(pk=uid)
+#     def get(self, request, uidb64, token):
+#         try:
+#             # Decode the uid
+#             uid = urlsafe_base64_decode(uidb64).decode()
+#             user = User.objects.get(pk=uid)
 
-            # Check if the token is valid
-            token_generator = PasswordResetTokenGenerator()
-            if token_generator.check_token(user, token):
-                # Verify the user's email
-                user.email_confirmed = True
-                user.save()
-                return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # Handle exceptions
-            return Response({'message': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+#             # Check if the token is valid
+#             token_generator = PasswordResetTokenGenerator()
+#             if token_generator.check_token(user, token):
+#                 # Verify the user's email
+#                 user.email_confirmed = True
+#                 user.save()
+#                 return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+#         except Exception as e:
+#             # Handle exceptions
+#             return Response({'message': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetRequestView(generics.GenericAPIView):
     permission_classes = []
@@ -208,7 +207,7 @@ class UnSubscribeView(APIView):
 
 
 class VerifyEmailView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
     serializer_class = VerifyEmailRequestSerializer
 
     def post(self, request):
@@ -233,3 +232,25 @@ class VerifyEmailView(generics.GenericAPIView):
         # Always return the same message whether the user exists or not
         # to prevent data leakage
         return Response({"message": "If an account with the email exists, a verification link has been sent."}, status=status.HTTP_200_OK)
+
+
+class VerifyEmailView(APIView):
+    
+    def post(self, request, uidb64, token):
+        try:
+            # Decode the uid
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+
+            # Check if the token is valid
+            token_generator = PasswordResetTokenGenerator()
+            if token_generator.check_token(user, token):
+                # Verify the user's email
+                user.email_confirmed = True
+                user.save()
+                return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Handle exceptions
+            return Response({'message': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
