@@ -61,28 +61,6 @@ class CartProductSerializer(serializers.ModelSerializer):
         representation['product'] = ProductSerializer(instance.product, context=self.context).data
         return representation
 
-
-class CartSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Cart model.
-    Includes a list of products in the cart.
-    """
-    products = CartProductSerializer(source='cartproduct_set', many=True, read_only=True)
-
-    class Meta:
-        model = models.Cart
-        fields = ['id', 'user', 'products']
-        read_only_fields = ['id', 'user']
-
-    def to_representation(self, instance):
-        """
-        Add total_price to serialized data.
-        """
-        representation = super().to_representation(instance)
-        representation['total_price'] = instance.total_price
-        return representation
-
-
 class CouponSerializer(serializers.ModelSerializer):
     """
     Serializer for the Coupon model.
@@ -92,6 +70,29 @@ class CouponSerializer(serializers.ModelSerializer):
         model = models.Coupon
         fields = ['id', 'code', 'discount', 'uses_limit']
         read_only_fields = ['id', 'discount', 'uses_limit']
+
+
+class CartSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Cart model.
+    Includes a list of products in the cart.
+    """
+    products = CartProductSerializer(source='cartproduct_set', many=True, read_only=True)
+    coupon = CouponSerializer(read_only=True)
+
+    class Meta:
+        model = models.Cart
+        fields = ['id', 'user', 'products', 'coupon']
+        read_only_fields = ['id', 'user', 'coupon']
+
+    def to_representation(self, instance):
+        """
+        Add total_price to serialized data.
+        """
+        representation = super().to_representation(instance)
+        representation['total_price'] = instance.total_price
+        representation['default_total_price'] = instance.default_total_price
+        return representation
 
 
 class ApplyCouponSerializer(serializers.ModelSerializer):

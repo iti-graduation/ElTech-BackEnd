@@ -4,21 +4,19 @@ Views for the cart APIs.
 from drf_spectacular.utils import extend_schema
 
 from django.shortcuts import get_object_or_404
-from django.db import transaction
 
-from rest_framework import viewsets, mixins, status
+from rest_framework import viewsets,status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Cart, CartProduct, Coupon, Order, OrderProduct, Product
+from core.models import Cart, CartProduct, Coupon, Product
 
 from cart import serializers
 
 
-class CartViewSet(mixins.DestroyModelMixin,
-                  viewsets.GenericViewSet):
+class CartViewSet(viewsets.GenericViewSet):
     """
     Viewset for the Cart model.
     """
@@ -28,8 +26,9 @@ class CartViewSet(mixins.DestroyModelMixin,
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        """Retrieve orders for authenticated user."""
         return self.queryset.filter(user=self.request.user)
-    
+
     @action(detail=False, methods=['get'])
     def get_cart(self, request):
         """get user's cart."""
@@ -39,8 +38,8 @@ class CartViewSet(mixins.DestroyModelMixin,
 
     @extend_schema(request=serializers.CartProductSerializer)
     @action(detail=False, methods=['post'], url_path='add_product')
-    def add(self, request, pk=None):
-        """Create or update a cart product."""
+    def add_cart_product(self, request, pk=None):
+        """Create a cart product."""
         
         if not Cart.objects.filter(user=request.user).exists():
             cart =Cart.objects.create(user=request.user)
@@ -71,7 +70,6 @@ class CartViewSet(mixins.DestroyModelMixin,
     @action(detail=False, methods=['patch'], url_path='update_product')
     def update_cart_product(self, request, pk=None):
         """update cart product."""
-        
         
         cart = Cart.objects.get(user=request.user)
 
@@ -119,15 +117,11 @@ class CartViewSet(mixins.DestroyModelMixin,
         cart = Cart.objects.get(user=request.user)
 
         try:
-            product = CartProduct.objects.get(id=product_id, cart=cart)
+            product = CartProduct.objects.filter(id=product_id, cart=cart)
         except CartProduct.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         product.delete()
-
-        # Delete the cart if it's empty
-        if not cart.products.exists():
-            cart.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

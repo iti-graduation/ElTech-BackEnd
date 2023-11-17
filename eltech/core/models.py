@@ -240,6 +240,11 @@ class Cart(models.Model):
         Coupon, on_delete=models.SET_NULL, null=True, blank=True)
 
     @property
+    def default_total_price(self):
+        total = sum(cp.total_price for cp in self.cartproduct_set.all())
+        return total
+    
+    @property
     def total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
         if self.coupon:
