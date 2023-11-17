@@ -24,7 +24,7 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Rating
         fields = ['id', 'rating', 'user']
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'user']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -46,13 +46,57 @@ class ProductFeatureSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class ProductFeatureCreateSerializer(serializers.ModelSerializer):
+    """Serializer for product features."""
+
+    product_id = serializers.PrimaryKeyRelatedField(
+        source='product.id', 
+        queryset=models.Product.objects.all(),
+        write_only=True
+    )
+
+    class Meta:
+        model = models.ProductFeature
+        fields = ['id', 'feature', 'product_id']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        product_id = validated_data.pop('product_id')
+        product = models.Product.objects.get(id=product_id)
+        feature = models.ProductFeature.objects.create(product=product, **validated_data)
+        return feature
+
+
+
 class ProductImageSerializer(serializers.ModelSerializer):
     """Serializer for product images."""
 
     class Meta:
         model = models.ProductImage
-        fields = ['id', 'image']
-        read_only_fields = ['id', 'image']
+        fields = ['id', 'image', 'is_thumbnail']
+        read_only_fields = ['id']
+
+
+class ProductImageCreateSerializer(serializers.ModelSerializer):
+    """Serializer for product images."""
+
+    product_id = serializers.PrimaryKeyRelatedField(
+        source='product.id', 
+        queryset=models.Product.objects.all(),
+        write_only=True
+    )
+
+    class Meta:
+        model = models.ProductImage
+        fields = ['id', 'image', 'is_thumbnail', 'product_id']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        print(validated_data)
+        product_id = validated_data.pop('product_id')
+        product = models.Product.objects.get(id=product_id)
+        image = models.ProductImage.objects.create(product=product, **validated_data)
+        return image
 
 
 class ProductThumbnailSerializer(serializers.ModelSerializer):
@@ -63,11 +107,6 @@ class ProductThumbnailSerializer(serializers.ModelSerializer):
         fields = ['image']
         read_only_fields = ['image']
 
-    # def to_representation(self, instance):
-    #     """Only return the image if it is a thumbnail."""
-    #     if instance.is_thumbnail:
-    #         return {'image': self.context['request'].build_absolute_uri(instance.image.url)}
-    #     return {}
     def to_representation(self, instance):
         """Only return the image if it is a thumbnail."""
         request = self.context.get('request')
@@ -99,6 +138,31 @@ class ProductSerializer(serializers.ModelSerializer):
         return representation
 
 
+class ProductCreateSerializer(serializers.ModelSerializer):
+    # images = ProductImageSerializer(many=True)
+    # features = ProductFeatureSerializer(many=True)
+    # images = serializers.ListSerializer(
+    #     child = serializers.FileField(max_length = 1000000, allow_empty_file = False, use_url = False),
+    #     write_only = True
+    # )
+    # features = serializers.ListSerializer(child=serializers.CharField())
+
+    class Meta:
+        model = models.Product
+        fields = ['id', 'name', 'price', 'is_hot', 'is_on_sale',
+                  'sale_amount', 'description', 'stock', 'is_featured', 'is_trending', 'category']
+
+    # def create(self, validated_data):
+    #     print(validated_data)
+    #     images_data = validated_data.pop('images')
+    #     features_data = validated_data.pop('features')
+    #     product = models.Product.objects.create(**validated_data)
+    #     for image_data in images_data:
+    #         models.ProductImage.objects.create(product=product, image=image_data)
+    #     for feature_data in features_data:
+    #         models.ProductFeature.objects.create(product=product, feature=feature_data)
+    #     return product
+
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer for categories."""
 
@@ -117,6 +181,7 @@ class CustomPagination(PageNumberPagination):
                 'previous': self.get_previous_link()
             },
             'count': self.page.paginator.count,
+            'page_number': self.page.number,
             'results': data
         }
 
@@ -189,15 +254,6 @@ class ProductDetailSerializer(ProductSerializer):
         return representation
 
 
-# class WeeklyDealSerializer(serializers.ModelSerializer):
-#     """Serializer for weekly deals."""
-#     product = ProductSerializer(read_only=True)
-#
-#     class Meta:
-#         model = models.WeeklyDeal
-#         fields = ['id', 'deal_time', 'product']
-#         read_only_fields = ['id']
-
 class WeeklyDealSerializer(serializers.ModelSerializer):
     """Serializer for weekly deals."""
     product = ProductSerializer(read_only=True)
@@ -216,5 +272,3 @@ class WeeklyDealSerializer(serializers.ModelSerializer):
         representation['product'] = product
 
         return representation
-
-

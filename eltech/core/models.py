@@ -173,7 +173,8 @@ class Rating(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='ratings')
 
 
 class Review(models.Model):
@@ -332,3 +333,6 @@ class Service(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     logo = models.ImageField(upload_to=service_image_file_path)
+
+    def __str__(self):
+        return self.title
