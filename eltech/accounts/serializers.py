@@ -15,18 +15,18 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object"""
-    # current_password = serializers.CharField(write_only=True)
-    # new_password = serializers.CharField(write_only=True)
+    current_password = serializers.CharField(write_only=True, required=False)
+    new_password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'mobile_phone', 'profile_picture',
+        fields = ('id', 'email', 'password', 'current_password', 'new_password', 'mobile_phone', 'profile_picture',
                   'birth_date', 'country', 'email_confirmed', 'is_subscribed', 'first_name', 'last_name',
                   'facebook_profile', 'instagram_profile', 'twitter_profile')
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 5},
-            # 'current_password': {'write_only': True},
-            # 'new_password': {'write_only': True, 'min_length': 5},
+            'current_password': {'write_only': True},
+            'new_password': {'write_only': True, 'min_length': 5},
         }
 
     def create(self, validated_data):
