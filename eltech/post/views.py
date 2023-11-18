@@ -14,6 +14,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 
 
 from django.db.models import Q
@@ -22,6 +23,11 @@ from core.models import Comment , Post
 
 from post.serializers import *
 
+    
+class PostPagination(PageNumberPagination):
+    page_size = 2  # Set the number of posts per page
+    page_size_query_param = 'page_size'  # Customize query parameter for page size
+    max_page_size = 1000  # Set a maximum page size if needed
 
 @extend_schema_view(
     list=extend_schema(parameters=[
@@ -46,7 +52,9 @@ from post.serializers import *
 )
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().order_by('-created_at')
+    pagination_class = PostPagination 
+
 
     def get_queryset(self):
         queryset = self.queryset
