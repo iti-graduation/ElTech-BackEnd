@@ -54,6 +54,7 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     queryset = Post.objects.all().order_by('-created_at')
     pagination_class = PostPagination 
+    # ordering_fields = ['created_at','user_id'] 
 
 
     def get_queryset(self):
