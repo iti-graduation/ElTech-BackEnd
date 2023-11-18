@@ -24,6 +24,7 @@ from django.core.mail import send_mail
 from rest_framework import status, views
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 import logging
 logger = logging.getLogger(__name__)
@@ -199,3 +200,20 @@ class UnSubscribeView(APIView):
             except User.DoesNotExist:
                 return Response({"message": "You have not subscribed before!"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class CheckAdminView(APIView):
+    """
+    Check if the current logged-in user is an admin.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        if user.is_staff:
+            # If the user is an admin (staff), return a success response
+            return Response({'is_admin': True})
+        else:
+            # If the user is not an admin, return a failure response
+            return Response({'is_admin': False})
