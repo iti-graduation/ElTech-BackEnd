@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'email', 'password', 'mobile_phone', 'profile_picture',
-                  'birth_date', 'country', 'is_subscribed', 'first_name', 'last_name',
+                  'birth_date', 'country', 'email_confirmed', 'is_subscribed', 'first_name', 'last_name',
                   'facebook_profile', 'instagram_profile', 'twitter_profile')
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 5},
@@ -42,7 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
         recipient_list = [user.email]
 
         # Send email
-        send_mail(subject, message, from_email, recipient_list)
+        # send_mail(subject, message, from_email, recipient_list)
 
         return user
 

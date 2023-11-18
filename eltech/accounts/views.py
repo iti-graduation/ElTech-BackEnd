@@ -22,6 +22,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_decode
 from django.core.mail import send_mail
+from django.conf import settings
 
 from rest_framework import status, views
 from rest_framework.response import Response
@@ -133,7 +134,11 @@ class PasswordResetRequestView(generics.GenericAPIView):
                 # Send email
                 subject = "Password Reset Requested"
                 message = f"Please follow this link to reset your password: {reset_link}"
-                from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                print('Email From Settings: ', settings.EMAIL_FROM)
+                # from_email = settings.EMAIL_FROM
+                from_email = '0eltech0@gmail.com'
+                print('Email From: ', from_email)
                 send_mail(subject, message, from_email, [user.email])
 
         # Always return the same message whether the user exists or not
@@ -206,7 +211,7 @@ class UnSubscribeView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class VerifyEmailView(generics.GenericAPIView):
+class VerifyEmailRequestView(generics.GenericAPIView):
     permission_classes = []
     serializer_class = VerifyEmailRequestSerializer
 
@@ -226,7 +231,8 @@ class VerifyEmailView(generics.GenericAPIView):
                 # Send email
                 subject = "Email Verification Requested"
                 message = f"Please follow this link to verify your email: {verification_link}"
-                from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                from_email = settings.FROM_EMAIL
                 send_mail(subject, message, from_email, [user.email])
 
         # Always return the same message whether the user exists or not
