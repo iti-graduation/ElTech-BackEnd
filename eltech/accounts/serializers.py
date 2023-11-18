@@ -7,19 +7,26 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.conf import settings
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object"""
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'mobile_phone', 'profile_picture',
+        fields = ('id', 'email', 'password', 'current_password', 'new_password', 'mobile_phone', 'profile_picture',
                   'birth_date', 'country', 'email_confirmed', 'is_subscribed', 'first_name', 'last_name',
                   'facebook_profile', 'instagram_profile', 'twitter_profile')
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 5},
+            'current_password': {'write_only': True},
+            'new_password': {'write_only': True, 'min_length': 5},
         }
 
     def create(self, validated_data):
@@ -46,14 +53,28 @@ class UserSerializer(serializers.ModelSerializer):
 
         return user
 
+    # def update(self, instance, validated_data):
+    #     """Update a user, setting the password correctly and return it"""
+    #     password = validated_data.pop('password', None)
+    #     user = super().update(instance, validated_data)
+
+    #     if password:
+    #         user.set_password(password)
+    #         user.save()
+
+    #     return user
     def update(self, instance, validated_data):
         """Update a user, setting the password correctly and return it"""
-        password = validated_data.pop('password', None)
+        current_password = validated_data.pop('current_password', None)
+        new_password = validated_data.pop('new_password', None)
         user = super().update(instance, validated_data)
 
-        if password:
-            user.set_password(password)
-            user.save()
+        if current_password and new_password:
+            if not instance.check_password(current_password):
+                raise serializers.ValidationError("Current password does not match the user's password")
+            else:
+                user.set_password(new_password)
+                user.save()
 
         return user
 
