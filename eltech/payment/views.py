@@ -36,7 +36,7 @@ def create_checkout_session(request):
             }],
             mode='payment',
             # Use the current domain for success
-            success_url='http://localhost:3000/orders',
+            success_url='http://localhost:3000/checkout?success=true',
             # Use the current domain for cancel
             cancel_url='http://localhost:3000/checkout'
         )

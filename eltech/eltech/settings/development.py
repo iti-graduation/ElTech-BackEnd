@@ -32,9 +32,9 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_PORT = 587
-EMAIL_FROM = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+EMAIL_FROM = '0eltech0@gmail.com'
+EMAIL_HOST_USER = '0eltech0@gmail.com'
+EMAIL_HOST_PASSWORD = 'dcwqpeaarucsczjc'
 
 # ...
 CORS_ALLOWED_ORIGINS = [

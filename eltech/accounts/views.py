@@ -137,8 +137,8 @@ class PasswordResetRequestView(generics.GenericAPIView):
                 message = f"Please follow this link to reset your password: {reset_link}"
                 # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
                 print('Email From Settings: ', settings.EMAIL_FROM)
-                # from_email = settings.EMAIL_FROM
-                from_email = '0eltech0@gmail.com'
+                from_email = settings.EMAIL_FROM
+                # from_email = '0eltech0@gmail.com'
                 print('Email From: ', from_email)
                 send_mail(subject, message, from_email, [user.email])
 
