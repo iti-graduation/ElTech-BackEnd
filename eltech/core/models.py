@@ -244,7 +244,7 @@ class Cart(models.Model):
     def default_total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
         return total
-    
+
     @property
     def total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
@@ -336,3 +336,17 @@ class Service(models.Model):
 
     def __str__(self):
         return self.title
+
+
+"""
+class Payment(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    country = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    address = models.TextField(blank=True)
+    zip = models.IntegerField()
+    payment_method = models.CharField(max_length=255)
+"""
