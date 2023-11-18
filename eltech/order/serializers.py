@@ -88,6 +88,12 @@ class OrderSerializer(serializers.ModelSerializer):
             product = Product.objects.get(id=product_data['product']['id'])
 
             OrderProduct.objects.create(order=order, product=product, quantity=product_data['quantity'])
-        cart.delete()
+        # cart.delete()
+
+        # Reset the cart
+        cart.products.clear()
+        cart.coupon = None
+        cart.save()
+
         return order
 
