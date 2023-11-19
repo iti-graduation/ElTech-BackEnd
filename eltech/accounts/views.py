@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from rest_framework import generics, authentication, permissions
+from rest_framework.generics import DestroyAPIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 from rest_framework.decorators import api_view
@@ -28,6 +29,7 @@ from rest_framework import status, views
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 
 import logging
 logger = logging.getLogger(__name__)
@@ -279,3 +281,19 @@ class CheckAdminView(APIView):
         else:
             # If the user is not an admin, return a failure response
             return Response({'is_admin': False})
+        
+        
+class UserListView(generics.ListAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+class DeleteUserView(DestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser] 

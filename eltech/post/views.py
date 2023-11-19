@@ -15,6 +15,8 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.filters import OrderingFilter
+
 
 
 from django.db.models import Q
@@ -54,6 +56,8 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     queryset = Post.objects.all().order_by('-created_at')
     pagination_class = PostPagination 
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     # ordering_fields = ['created_at','user_id'] 
 
 

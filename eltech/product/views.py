@@ -148,6 +148,9 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save()
+        
+    def perform_destroy(self, instance):
+        instance.delete()
 
     @extend_schema(request=serializers.ReviewSerializer)
     @action(detail=True, methods=["post"])
