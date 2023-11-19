@@ -20,7 +20,7 @@ class CartViewSet(viewsets.GenericViewSet):
     """
     Viewset for the Cart model.
     """
-    queryset = Cart.objects.all()
+    queryset = Cart.objects.all().order_by('-id')
     serializer_class = serializers.CartSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]

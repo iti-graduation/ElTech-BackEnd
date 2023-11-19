@@ -10,12 +10,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ['id', 'email', 'first_name', 'last_name']
-        read_only_fields = ['id', 'email', 'first_name', 'last_name']
+        fields = ['id', 'email', 'first_name', 'last_name', 'profile_picture']
+        read_only_fields = ['id', 'email', 'first_name', 'last_name', 'profile_picture']
         
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer for categories."""
-
 
     class Meta:
         model = models.Category

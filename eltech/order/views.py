@@ -18,6 +18,7 @@ from order import serializers
 
 
 class OrderViewSet(mixins.ListModelMixin,
+                   mixins.RetrieveModelMixin,
                    mixins.CreateModelMixin,
                    viewsets.GenericViewSet):
     """View for manage order APIs."""

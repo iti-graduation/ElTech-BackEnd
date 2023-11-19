@@ -75,8 +75,17 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'status', 'user', 'products']
+        fields = ['id', 'status', 'user', 'products', 'created_at']
         read_only_fields = ['id','user', 'products']
+
+    def to_representation(self, instance):
+        """
+        Add total_price to serialized data.
+        """
+        representation = super().to_representation(instance)
+        representation['total_price'] = instance.total_price
+        return representation
+
 
     def create(self, validated_data):
         """Create an order"""
