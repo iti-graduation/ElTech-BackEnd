@@ -76,7 +76,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'status', 'user', 'products',
-                  'country', 'first_name', 'last_name', 'address', 'zip', 'payment_method', 'order_note']
+                  'country', 'first_name', 'last_name', 'address', 'zip', 'payment_method', 'order_note', 'created_at']
         read_only_fields = ['id', 'user', 'products']
 
     def to_representation(self, instance):
