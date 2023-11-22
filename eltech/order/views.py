@@ -10,13 +10,15 @@ from rest_framework import (
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,IsAdminUser
+from rest_framework import generics
 
 from core.models import Order
 from order import serializers
 
 
 class OrderViewSet(mixins.ListModelMixin,
+                   mixins.RetrieveModelMixin,
                    mixins.CreateModelMixin,
                    viewsets.GenericViewSet):
     """View for manage order APIs."""
@@ -44,4 +46,11 @@ class OrderViewSet(mixins.ListModelMixin,
         order.save()
         serializer = serializers.OrderSerializer(order, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
+    
+class OrderListView(generics.ListAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = serializers.OrderSerializer
+    queryset = Order.objects.all()
 

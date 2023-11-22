@@ -10,12 +10,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ['id', 'email', 'first_name', 'last_name']
-        read_only_fields = ['id', 'email', 'first_name', 'last_name']
+        fields = ['id', 'email', 'first_name', 'last_name', 'profile_picture']
+        read_only_fields = ['id', 'email', 'first_name', 'last_name', 'profile_picture']
         
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer for categories."""
-
 
     class Meta:
         model = models.Category
@@ -31,8 +30,9 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True) 
-    category = CategorySerializer(read_only=True)  
+    category = CategorySerializer(read_only=True) 
     class Meta:
         model = models.Post
-        fields = '__all__'
+        fields = ['id', 'category', 'title', 'content', 'image','user','created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
+        

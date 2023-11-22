@@ -14,5 +14,8 @@ urlpatterns = [
     path('subscribe/', views.SubscribeView.as_view(), name='subscribe'),
     path('unsubscribe/', views.UnSubscribeView.as_view(), name='unsubscribe'),
     path('check-admin/', views.CheckAdminView.as_view(), name='check-admin'),
+    path('users/', views.UserListView.as_view(), name='user-list'),
+    path('users/<int:pk>/', views.DeleteUserView.as_view(), name='delete-user'),
+
 
 ]
