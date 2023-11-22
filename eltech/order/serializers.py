@@ -75,8 +75,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'status', 'user', 'products', 'created_at']
-        read_only_fields = ['id','user', 'products']
+        fields = ['id', 'status', 'user', 'products',
+                  'country', 'first_name', 'last_name', 'address', 'zip', 'payment_method', 'order_note']
+        read_only_fields = ['id', 'user', 'products']
 
     def to_representation(self, instance):
         """
@@ -96,7 +97,8 @@ class OrderSerializer(serializers.ModelSerializer):
             product_data = CartProductSerializer(product_data, context=self.context).data
             product = Product.objects.get(id=product_data['product']['id'])
 
-            OrderProduct.objects.create(order=order, product=product, quantity=product_data['quantity'])
+            OrderProduct.objects.create(
+                order=order, product=product, quantity=product_data['quantity'])
         # cart.delete()
 
         # Reset the cart
@@ -105,4 +107,3 @@ class OrderSerializer(serializers.ModelSerializer):
         cart.save()
 
         return order
-

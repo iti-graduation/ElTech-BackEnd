@@ -15,5 +15,4 @@ app_name = 'order'
 urlpatterns = [
     path('', include(router.urls)),
     path('ordersList/', views.OrderListView.as_view(), name='order-list'),
-
 ]
