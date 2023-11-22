@@ -233,7 +233,7 @@ class VerifyEmailRequestView(generics.GenericAPIView):
                 subject = "Email Verification Requested"
                 message = f"Please follow this link to verify your email: {verification_link}"
                 # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
-                from_email = settings.FROM_EMAIL
+                from_email = settings.EMAIL_FROM
                 send_mail(subject, message, from_email, [user.email])
 
         # Always return the same message whether the user exists or not
