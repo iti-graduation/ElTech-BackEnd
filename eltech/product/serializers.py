@@ -260,7 +260,7 @@ class ProductDetailSerializer(ProductSerializer):
     class Meta(ProductSerializer.Meta):
         fields = ProductSerializer.Meta.fields + [
             'features', 'ratings', 'reviews',
-            'category', 'images'
+            'category', 'images', 'is_trending', 'is_featured'
         ]
 
     def to_representation(self, instance):

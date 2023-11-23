@@ -19,11 +19,19 @@ from rest_framework.pagination import PageNumberPagination
 
 from django.db.models import Q
 
-from core.models import Product, WeeklyDeal, Category, Review, ProductFeature, ProductImage
+from core.models import (
+    Product,
+    WeeklyDeal,
+    Category,
+    Review,
+    ProductFeature,
+    ProductImage,
+)
 
 from product import serializers
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,13 +39,15 @@ class ProductPagination(PageNumberPagination):
     page_size = 12
 
     def get_paginated_response(self, data):
-        return Response({
-            'next': self.get_next_link(),
-            'previous': self.get_previous_link(),
-            'count': self.page.paginator.count,
-            'page_number': self.page.number,  # Add this line
-            'results': data,
-        })
+        return Response(
+            {
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "count": self.page.paginator.count,
+                "page_number": self.page.number,  # Add this line
+                "results": data,
+            }
+        )
 
 
 @extend_schema_view(
@@ -89,10 +99,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         is_featured = bool(int(self.request.query_params.get("is_featured", 0)))
         is_trending = bool(int(self.request.query_params.get("is_trending", 0)))
         is_popular = bool(int(self.request.query_params.get("is_popular", 0)))
-        category = self.request.query_params.get('category', None)
+        category = self.request.query_params.get("category", None)
         # ordering = self.request.query_params.get("ordering", 0)
         query = self.request.query_params.get("q")
-        queryset = self.queryset.prefetch_related('ratings')
+        queryset = self.queryset.prefetch_related("ratings")
 
         if category is not None:
             queryset = queryset.filter(category__id=category)
@@ -109,7 +119,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_trending=True)
 
         if is_popular:
-            queryset = queryset.order_by('-view_count')[:12]
+            queryset = queryset.order_by("-view_count")[:12]
 
         return queryset
 
@@ -127,8 +137,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         """Return the serializer class for request."""
         if self.action == "list":
             return serializers.ProductSerializer
+
+        # if self.action == "create":
+            # return serializers.ProductCreateSerializer
         
-        if self.action == 'create':
+        if self.action in ["create", "partial_update"]:
             return serializers.ProductCreateSerializer
 
         return self.serializer_class
@@ -140,18 +153,20 @@ class ProductViewSet(viewsets.ModelViewSet):
         instance.save()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
-    
+
     def create(self, request, *args, **kwargs):
         print(request.data)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def perform_create(self, serializer):
         serializer.save()
-        
+
     def perform_destroy(self, instance):
         instance.delete()
 
@@ -196,8 +211,8 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    @action(detail=True, methods=['post'])
+
+    @action(detail=True, methods=["post"])
     def upload_image(self, request, pk=None):
         product = self.get_object()
         serializer = serializers.ProductImageSerializer(data=request.data)
@@ -206,7 +221,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def add_feature(self, request, pk=None):
         product = self.get_object()
         serializer = serializers.ProductFeatureSerializer(data=request.data)
@@ -242,7 +257,9 @@ class WeeklyDealViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
         try:
             weekly_deal = WeeklyDeal.objects.latest("deal_time")
         except WeeklyDeal.DoesNotExist:
-            return Response({"detail": "No weekly deal available"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "No weekly deal available"}, status=status.HTTP_404_NOT_FOUND
+            )
         serializer = self.get_serializer(weekly_deal)
         return Response(serializer.data)
 
@@ -269,6 +286,7 @@ class WeeklyDealViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
 #             return Response(serializer.data, status=status.HTTP_201_CREATED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ProductFeatureViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """Views for manage product features APIs."""
 
@@ -276,18 +294,25 @@ class ProductFeatureViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = ProductFeature.objects.all()
 
     def create(self, request, *args, **kwargs):
-        product_id = request.data.get('product_id')
-        feature = request.data.get('feature')
+        product_id = request.data.get("product_id")
+        feature = request.data.get("feature")
 
         if not product_id or not feature:
-            return Response({"detail": "product_id and feature are required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "product_id and feature are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
-            return Response({"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        product_feature = ProductFeature.objects.create(product=product, feature=feature)
+        product_feature = ProductFeature.objects.create(
+            product=product, feature=feature
+        )
 
         serializer = self.get_serializer(product_feature)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -296,7 +321,10 @@ class ProductFeatureViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-class ProductImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+
+class ProductImageViewSet(
+    mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
+):
     """ViewSet for product images API."""
 
     serializer_class = serializers.ProductImageCreateSerializer
@@ -320,7 +348,7 @@ class ProductImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     #         image = ProductImage.objects.create(product=product, **serializer.validated_data)
     #         return Response(serializer.data, status=status.HTTP_201_CREATED)
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     # def create(self, request, *args, **kwargs):
     #     print(request.data)
     #     logger.info(request.data)
@@ -343,26 +371,33 @@ class ProductImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     def create(self, request, *args, **kwargs):
         print(request.data)
         logger.info(request.data)
-        product_id = request.data.get('product_id')
-        image = request.data.get('image')
-        is_thumbnail = request.data.get('is_thumbnail')
+        product_id = request.data.get("product_id")
+        image = request.data.get("image")
+        is_thumbnail = request.data.get("is_thumbnail")
 
         # Convert is_thumbnail to boolean if it's a string
         if isinstance(is_thumbnail, str):
-            if is_thumbnail.lower() == 'true':
+            if is_thumbnail.lower() == "true":
                 is_thumbnail = True
-            elif is_thumbnail.lower() == 'false':
+            elif is_thumbnail.lower() == "false":
                 is_thumbnail = False
 
         if not product_id or not image:
-            return Response({"detail": "product_id and image are required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "product_id and image are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
-            return Response({"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        product_image = ProductImage.objects.create(product=product, image=image, is_thumbnail=is_thumbnail)
+        product_image = ProductImage.objects.create(
+            product=product, image=image, is_thumbnail=is_thumbnail
+        )
 
         serializer = self.get_serializer(product_image)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
