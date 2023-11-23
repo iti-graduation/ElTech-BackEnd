@@ -139,8 +139,8 @@ class ProductViewSet(viewsets.ModelViewSet):
             return serializers.ProductSerializer
 
         # if self.action == "create":
-            # return serializers.ProductCreateSerializer
-        
+        # return serializers.ProductCreateSerializer
+
         if self.action in ["create", "partial_update"]:
             return serializers.ProductCreateSerializer
 
@@ -287,7 +287,9 @@ class WeeklyDealViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProductFeatureViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+class ProductFeatureViewSet(
+    mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
+):
     """Views for manage product features APIs."""
 
     serializer_class = serializers.ProductFeatureCreateSerializer
