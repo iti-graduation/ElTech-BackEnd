@@ -312,6 +312,9 @@ class ProductFeatureViewSet(
                 {"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
 
+        # Delete all existing images related to the product
+        product.features.all().delete()
+
         product_feature = ProductFeature.objects.create(
             product=product, feature=feature
         )
@@ -372,7 +375,6 @@ class ProductImageViewSet(
 
     def create(self, request, *args, **kwargs):
         print(request.data)
-        logger.info(request.data)
         product_id = request.data.get("product_id")
         image = request.data.get("image")
         is_thumbnail = request.data.get("is_thumbnail")
@@ -397,9 +399,36 @@ class ProductImageViewSet(
                 {"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
 
+        # Check if an image with the same product_id and image already exists
+        # if ProductImage.objects.filter(product=product, image=image).exists():
+        #     return Response(
+        #         {"detail": "Image with the same product_id and image already exists"},
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #     )
+
+        if is_thumbnail:
+            product.images.all().delete()
+
         product_image = ProductImage.objects.create(
             product=product, image=image, is_thumbnail=is_thumbnail
         )
+
+        # Check if an image with the same product_id and image already exists
+        # print(product)
+
+        # test_image = ProductImage.objects.get(product=product)[0]
+        # print("Old Image", test_image)
+        # print("New Image", image)
+        # try:
+        #     product_image = ProductImage.objects.get(product=product, image=image)
+        #     # If the image exists, update the is_thumbnail field
+        #     product_image.is_thumbnail = is_thumbnail
+        #     product_image.save()
+        # except ProductImage.DoesNotExist:
+        #     # If the image does not exist, create a new one
+        #     product_image = ProductImage.objects.create(
+        #         product=product, image=image, is_thumbnail=is_thumbnail
+        #     )
 
         serializer = self.get_serializer(product_image)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

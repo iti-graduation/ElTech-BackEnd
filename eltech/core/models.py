@@ -16,7 +16,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
     Group,
-    Permission
+    Permission,
 )
 
 
@@ -25,9 +25,9 @@ def product_image_file_path(instance, filename):
 
     # get the extension of the file (png/jpg/etc..)
     ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
+    filename = f"{uuid.uuid4()}{ext}"
 
-    return os.path.join('uploads', 'product', filename)
+    return os.path.join("uploads", "product", filename)
 
 
 def category_image_file_path(instance, filename):
@@ -35,9 +35,9 @@ def category_image_file_path(instance, filename):
 
     # get the extension of the file (png/jpg/etc..)
     ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
+    filename = f"{uuid.uuid4()}{ext}"
 
-    return os.path.join('uploads', 'category', filename)
+    return os.path.join("uploads", "category", filename)
 
 
 def post_image_file_path(instance, filename):
@@ -45,9 +45,9 @@ def post_image_file_path(instance, filename):
 
     # get the extension of the file (png/jpg/etc..)
     ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
+    filename = f"{uuid.uuid4()}{ext}"
 
-    return os.path.join('uploads', 'post', filename)
+    return os.path.join("uploads", "post", filename)
 
 
 def profile_image_file_path(instance, filename):
@@ -55,9 +55,9 @@ def profile_image_file_path(instance, filename):
 
     # get the extension of the file (png/jpg/etc..)
     ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
+    filename = f"{uuid.uuid4()}{ext}"
 
-    return os.path.join('uploads', 'profile', filename)
+    return os.path.join("uploads", "profile", filename)
 
 
 def service_image_file_path(instance, filename):
@@ -65,9 +65,9 @@ def service_image_file_path(instance, filename):
 
     # get the extension of the file (png/jpg/etc..)
     ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
+    filename = f"{uuid.uuid4()}{ext}"
 
-    return os.path.join('uploads', 'service', filename)
+    return os.path.join("uploads", "service", filename)
 
 
 class UserManager(BaseUserManager):
@@ -76,7 +76,7 @@ class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         """Create, save and return a new user."""
         if not email:
-            raise ValueError('User must have an email address.')
+            raise ValueError("User must have an email address.")
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -100,9 +100,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email_confirmed = models.BooleanField(default=False)
     mobile_phone = models.CharField(max_length=15, unique=True)
     profile_picture = models.ImageField(
-        upload_to=profile_image_file_path,
-        null=True,
-        blank=True
+        upload_to=profile_image_file_path, null=True, blank=True
     )
     birth_date = models.DateField(null=True, blank=True)
     # name = models.CharField(max_length=255)
@@ -121,17 +119,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
 
     @property
     def name(self):
         """Returns the full name of the user."""
 
-        return f'{self.first_name} {self.last_name}'
+        return f"{self.first_name} {self.last_name}"
 
 
 class Category(models.Model):
     """Category object"""
+
     name = models.CharField(max_length=255)
     image = models.ImageField(upload_to=category_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -143,6 +142,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     """Product object"""
+
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=5, decimal_places=2)
@@ -157,7 +157,8 @@ class Product(models.Model):
     is_trending = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name='products')
+        Category, on_delete=models.CASCADE, related_name="products"
+    )
 
     def __str__(self):
         return self.name
@@ -165,50 +166,58 @@ class Product(models.Model):
 
 class Rating(models.Model):
     """Rating object"""
+
     rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        null=True,
-        default=1
+        validators=[MinValueValidator(1), MaxValueValidator(5)], null=True, default=1
     )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name='ratings')
+        Product, on_delete=models.CASCADE, related_name="ratings"
+    )
 
 
 class Review(models.Model):
     """Review object"""
+
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name='reviews')
+        Product, on_delete=models.CASCADE, related_name="reviews"
+    )
 
 
 class ProductImage(models.Model):
     """Product image object"""
+
     image = models.ImageField(upload_to=product_image_file_path)
     is_thumbnail = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name='images')
+        Product, on_delete=models.CASCADE, related_name="images"
+    )
 
     def __str__(self):
         return self.image.url
 
+    def delete(self, *args, **kwargs):
+        self.image.delete()
+        super().delete(*args, **kwargs)
+
 
 class ProductFeature(models.Model):
     """Product feature object"""
+
     feature = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name='features')
+        Product, on_delete=models.CASCADE, related_name="features"
+    )
 
     def __str__(self):
         return self.feature
@@ -221,13 +230,14 @@ class WeeklyDeal(models.Model):
 
 class Favorite(models.Model):
     """Favorite product object"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
 
 class Coupon(models.Model):
     """Coupon object"""
+
     code = models.CharField(max_length=255)
     discount = models.DecimalField(max_digits=5, decimal_places=2)
     uses_limit = models.PositiveSmallIntegerField(default=0)
@@ -235,11 +245,10 @@ class Coupon(models.Model):
 
 class Cart(models.Model):
     """Cart object"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through='CartProduct')
-    coupon = models.ForeignKey(
-        Coupon, on_delete=models.SET_NULL, null=True, blank=True)
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product, through="CartProduct")
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
 
     @property
     def default_total_price(self):
@@ -250,12 +259,13 @@ class Cart(models.Model):
     def total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
         if self.coupon:
-            total *= (1 - self.coupon.discount/100)
+            total *= 1 - self.coupon.discount / 100
         return total
 
 
 class CartProduct(models.Model):
     """Cart product object"""
+
     quantity = models.PositiveIntegerField(default=1)
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -267,25 +277,28 @@ class CartProduct(models.Model):
 
 class Order(models.Model):
     """Order object"""
+
     STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('shipped', 'Shipped'),
-        ('delivered', 'Delivered'),
+        ("pending", "Pending"),
+        ("shipped", "Shipped"),
+        ("delivered", "Delivered"),
     )
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     total_price = models.DecimalField(max_digits=5, decimal_places=2)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    products = models.ManyToManyField(Product, through='OrderProduct')
+    products = models.ManyToManyField(Product, through="OrderProduct")
     # Additional fields for the order model
-    country = models.CharField(max_length=255, )
+    country = models.CharField(
+        max_length=255,
+    )
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     zip = models.IntegerField()
-    payment_method = models.CharField(max_length=255, )
+    payment_method = models.CharField(
+        max_length=255,
+    )
     order_note = models.TextField(blank=True, null=True)
 
     @property
@@ -298,6 +311,7 @@ class Order(models.Model):
 
 class OrderProduct(models.Model):
     """Order product object"""
+
     quantity = models.PositiveIntegerField(default=1)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -309,13 +323,13 @@ class OrderProduct(models.Model):
 
 class Post(models.Model):
     """Post object"""
+
     title = models.CharField(max_length=255)
     content = models.TextField()
     image = models.ImageField(upload_to=post_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -324,15 +338,15 @@ class Post(models.Model):
 
 class Comment(models.Model):
     """Comment object"""
+
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    post = models.ForeignKey(
-        Post, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     parent = models.ForeignKey(
-        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="replies"
+    )
 
     def __str__(self):
         return f"by: {self.user.email}, id: {self.id}"
@@ -340,6 +354,7 @@ class Comment(models.Model):
 
 class Service(models.Model):
     """Service object"""
+
     title = models.CharField(max_length=255)
     description = models.TextField()
     logo = models.ImageField(upload_to=service_image_file_path)
