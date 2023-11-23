@@ -8,6 +8,9 @@ from django.db.models import Avg
 
 from core import models
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for users."""
@@ -77,6 +80,27 @@ class ProductImageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+# class ProductImageCreateSerializer(serializers.ModelSerializer):
+#     """Serializer for product images."""
+
+#     product_id = serializers.PrimaryKeyRelatedField(
+#         source='product.id', 
+#         queryset=models.Product.objects.all(),
+#         write_only=True
+#     )
+
+#     class Meta:
+#         model = models.ProductImage
+#         fields = ['id', 'image', 'is_thumbnail', 'product_id']
+#         read_only_fields = ['id']
+
+#     def create(self, validated_data):
+#         print(validated_data)
+#         product_id = validated_data.pop('product_id')
+#         product = models.Product.objects.get(id=product_id)
+#         image = models.ProductImage.objects.create(product=product, **validated_data)
+#         return image
+
 class ProductImageCreateSerializer(serializers.ModelSerializer):
     """Serializer for product images."""
 
@@ -90,6 +114,18 @@ class ProductImageCreateSerializer(serializers.ModelSerializer):
         model = models.ProductImage
         fields = ['id', 'image', 'is_thumbnail', 'product_id']
         read_only_fields = ['id']
+
+    def to_internal_value(self, data):
+        # Convert is_thumbnail to boolean
+        print(data)
+        logger.info(data)
+        is_thumbnail = data.get('is_thumbnail')
+        if isinstance(is_thumbnail, str):
+            if is_thumbnail.lower() == 'true':
+                data['is_thumbnail'] = True
+            elif is_thumbnail.lower() == 'false':
+                data['is_thumbnail'] = False
+        return super().to_internal_value(data)
 
     def create(self, validated_data):
         print(validated_data)

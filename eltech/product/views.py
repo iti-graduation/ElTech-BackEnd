@@ -23,6 +23,9 @@ from core.models import Product, WeeklyDeal, Category, Review, ProductFeature, P
 
 from product import serializers
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class ProductPagination(PageNumberPagination):
     page_size = 12
@@ -318,9 +321,38 @@ class ProductImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     #         return Response(serializer.data, status=status.HTTP_201_CREATED)
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    # def create(self, request, *args, **kwargs):
+    #     print(request.data)
+    #     logger.info(request.data)
+    #     product_id = request.data.get('product_id')
+    #     image = request.data.get('image')
+
+    #     if not product_id or not image:
+    #         return Response({"detail": "product_id and image are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     try:
+    #         product = Product.objects.get(id=product_id)
+    #     except Product.DoesNotExist:
+    #         return Response({"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND)
+
+    #     product_image = ProductImage.objects.create(product=product, image=image)
+
+    #     serializer = self.get_serializer(product_image)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     def create(self, request, *args, **kwargs):
+        print(request.data)
+        logger.info(request.data)
         product_id = request.data.get('product_id')
         image = request.data.get('image')
+        is_thumbnail = request.data.get('is_thumbnail')
+
+        # Convert is_thumbnail to boolean if it's a string
+        if isinstance(is_thumbnail, str):
+            if is_thumbnail.lower() == 'true':
+                is_thumbnail = True
+            elif is_thumbnail.lower() == 'false':
+                is_thumbnail = False
 
         if not product_id or not image:
             return Response({"detail": "product_id and image are required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -330,7 +362,7 @@ class ProductImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         except Product.DoesNotExist:
             return Response({"detail": "Product does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
-        product_image = ProductImage.objects.create(product=product, image=image)
+        product_image = ProductImage.objects.create(product=product, image=image, is_thumbnail=is_thumbnail)
 
         serializer = self.get_serializer(product_image)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
