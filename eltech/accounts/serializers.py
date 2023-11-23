@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'email', 'password', 'current_password', 'new_password', 'mobile_phone', 'profile_picture',
                   'birth_date', 'country', 'email_confirmed', 'is_subscribed', 'first_name', 'last_name',
-                  'facebook_profile', 'instagram_profile', 'twitter_profile')
+                  'facebook_profile', 'instagram_profile', 'twitter_profile', 'is_superuser')
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 5},
             'current_password': {'write_only': True},

@@ -271,6 +271,7 @@ class CategoryDetailSerializer(CategorySerializer):
 class ProductDetailSerializer(ProductSerializer):
     """Serializer for product detail view."""
 
+    users_to_notify = serializers.SerializerMethodField()
     images = ProductImageSerializer(many=True, read_only=True)
     features = ProductFeatureSerializer(many=True, read_only=True)
     ratings = RatingSerializer(many=True, read_only=True)
@@ -286,6 +287,7 @@ class ProductDetailSerializer(ProductSerializer):
             "images",
             "is_trending",
             "is_featured",
+            "users_to_notify",
         ]
 
     def to_representation(self, instance):
@@ -313,6 +315,16 @@ class ProductDetailSerializer(ProductSerializer):
         representation["reviews_count"] = reviews_count
 
         return representation
+    
+    # def get_users_to_notify(self, obj):
+    #     notifications = models.ProductNotification.objects.filter(product=obj)
+    #     users = [notification.user for notification in notifications]
+    #     return UserSerializer(users, many=True).data
+    
+    def get_users_to_notify(self, obj):
+        notifications = models.ProductNotification.objects.filter(product=obj)
+        users = [user for notification in notifications for user in notification.users.all()]
+        return UserSerializer(users, many=True).data
 
 
 class WeeklyDealSerializer(serializers.ModelSerializer):

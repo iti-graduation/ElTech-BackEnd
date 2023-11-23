@@ -75,6 +75,12 @@ class ProductPagination(PageNumberPagination):
                 description="Get popular products only.",
             ),
             OpenApiParameter(
+                "is_deleted",
+                OpenApiTypes.INT,
+                enum=[0, 1],
+                description="Get available products only.",
+            ),
+            OpenApiParameter(
                 "q",
                 OpenApiTypes.STR,
                 description="Search products by name or description.",
@@ -102,13 +108,18 @@ class ProductViewSet(viewsets.ModelViewSet):
         is_featured = bool(int(self.request.query_params.get("is_featured", 0)))
         is_trending = bool(int(self.request.query_params.get("is_trending", 0)))
         is_popular = bool(int(self.request.query_params.get("is_popular", 0)))
+        is_deleted = bool(int(self.request.query_params.get("is_deleted", 0)))
         category = self.request.query_params.get("category", None)
         # ordering = self.request.query_params.get("ordering", 0)
         query = self.request.query_params.get("q")
         queryset = self.queryset.prefetch_related("ratings")
+        # queryset = self.queryset.prefetch_related("ratings").filter(is_deleted=False)
 
         if category is not None:
             queryset = queryset.filter(category__id=category)
+
+        if is_deleted is not None:
+            queryset = queryset.filter(is_deleted=True)
 
         if query:
             queryset = queryset.filter(
