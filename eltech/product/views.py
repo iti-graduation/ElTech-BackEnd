@@ -112,8 +112,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         category = self.request.query_params.get("category", None)
         # ordering = self.request.query_params.get("ordering", 0)
         query = self.request.query_params.get("q")
-        queryset = self.queryset.prefetch_related("ratings")
+        # queryset = self.queryset.prefetch_related("ratings")
         # queryset = self.queryset.prefetch_related("ratings").filter(is_deleted=False)
+
+        if self.request.user.is_superuser:
+            queryset = self.queryset.prefetch_related("ratings")
+        else:
+            queryset = self.queryset.prefetch_related("ratings").filter(is_deleted=False)
 
         if category is not None:
             queryset = queryset.filter(category__id=category)
