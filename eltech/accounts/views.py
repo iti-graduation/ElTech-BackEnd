@@ -31,12 +31,28 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import IsAdminUser
+from rest_framework.pagination import PageNumberPagination
 
 import logging
 logger = logging.getLogger(__name__)
 
 
 User = get_user_model()
+
+class UserPagination(PageNumberPagination):
+    page_size = 10
+
+    def get_paginated_response(self, data):
+        return Response(
+            {
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "count": self.page.paginator.count,
+                "page_number": self.page.number,  # Add this line
+                "results": data,
+            }
+        )
+
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system"""
@@ -287,10 +303,21 @@ class CheckAdminView(APIView):
 class UserListView(generics.ListAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = UserSerializer
+    pagination_class = UserPagination
     queryset = User.objects.all()
+
+    # def list(self, request, *args, **kwargs):
+    #     queryset = self.get_queryset()
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
