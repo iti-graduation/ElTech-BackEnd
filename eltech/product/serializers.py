@@ -183,6 +183,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "thumbnail",
             "description",
             "stock",
+            "is_deleted",
         ]
         read_only_fields = ["id"]
 
@@ -215,6 +216,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "stock",
             "is_featured",
             "is_trending",
+            "is_deleted",
             "category",
         ]
 
