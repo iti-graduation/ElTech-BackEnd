@@ -53,16 +53,16 @@ class UserSerializer(serializers.ModelSerializer):
 
         return user
 
-    # def update(self, instance, validated_data):
-    #     """Update a user, setting the password correctly and return it"""
-    #     password = validated_data.pop('password', None)
-    #     user = super().update(instance, validated_data)
+    def update(self, instance, validated_data):
+        """Update a user, setting the password correctly and return it"""
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
 
-    #     if password:
-    #         user.set_password(password)
-    #         user.save()
+        if password:
+            user.set_password(password)
+            user.save()
 
-    #     return user
+        return user
     def update(self, instance, validated_data):
         """Update a user, setting the password correctly and return it"""
         current_password = validated_data.pop('current_password', None)
@@ -77,6 +77,29 @@ class UserSerializer(serializers.ModelSerializer):
                 user.save()
 
         return user
+    
+    # def update(self, instance, validated_data):
+    #     """Update a user, setting the password correctly and return it"""
+    #     current_password = validated_data.pop('current_password', None)
+    #     new_password = validated_data.pop('new_password', None)
+    #     user = super().update(instance, validated_data)
+
+    #     request = self.context.get('request')
+    #     if request and request.user.is_staff:
+    #         # If the request is made by an admin, update the password directly
+    #         if new_password:
+    #             user.set_password(new_password)
+    #             user.save()
+    #     else:
+    #         # If the request is made by a non-admin, check the current password
+    #         if current_password and new_password:
+    #             if not instance.check_password(current_password):
+    #                 raise serializers.ValidationError("Current password does not match the user's password")
+    #             else:
+    #                 user.set_password(new_password)
+    #                 user.save()
+
+    #     return user
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token serializer"""
