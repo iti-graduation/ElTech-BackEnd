@@ -293,7 +293,18 @@ class UserListView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
-class DeleteUserView(DestroyAPIView):
+# class DeleteUserView(DestroyAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#     permission_classes = [IsAdminUser] 
+
+
+# class RetrieveUserView(generics.RetrieveAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#     permission_classes = [IsAdminUser]
+
+class UserDetailView(generics.RetrieveDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser] 
+    permission_classes = [IsAdminUser]
