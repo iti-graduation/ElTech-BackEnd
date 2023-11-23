@@ -361,3 +361,11 @@ class Service(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class ProductNotification(models.Model):
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('product',)

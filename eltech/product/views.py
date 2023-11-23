@@ -18,6 +18,8 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.pagination import PageNumberPagination
 
 from django.db.models import Q
+from django.core.mail import send_mail
+from django.conf import settings
 
 from core.models import (
     Product,
@@ -26,6 +28,7 @@ from core.models import (
     Review,
     ProductFeature,
     ProductImage,
+    ProductNotification,
 )
 
 from product import serializers
@@ -169,6 +172,45 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.delete()
+
+    def update(self, request, *args, **kwargs):
+        product = self.get_object()
+        old_stock = product.stock
+        response = super().update(request, *args, **kwargs)
+        product.refresh_from_db()
+        new_stock = product.stock
+        if old_stock == 0 and new_stock > 0:
+            notifications = ProductNotification.objects.filter(product=product)
+            for notification in notifications:
+                for user in notification.users.all():
+                    send_mail(
+                        'Product Available',
+                        f'The product {product.name} is now available.',
+                        settings.EMAIL_FROM,
+                        [user.email],
+                        fail_silently=False,
+                    )
+                notification.delete()
+        return response
+
+    # @action(detail=True, methods=["post"])
+    # def notify(self, request, pk=None):
+    #     """Add a product to the user's notifications."""
+    #     product = self.get_object()
+    #     notification, created = ProductNotification.objects.get_or_create(product=product)
+    #     notification.users.add(request.user)
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    # from drf_spectacular.utils import extend_schema
+
+    @extend_schema(request=None)
+    @action(detail=True, methods=["post"])
+    def notify(self, request, pk=None):
+        """Add a product to the user's notifications."""
+        product = self.get_object()
+        notification, created = ProductNotification.objects.get_or_create(product=product)
+        notification.users.add(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(request=serializers.ReviewSerializer)
     @action(detail=True, methods=["post"])
@@ -432,3 +474,13 @@ class ProductImageViewSet(
 
         serializer = self.get_serializer(product_image)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ProductNotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.ProductNotificationSerializer
+    queryset = ProductNotification.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(users=[self.request.user])

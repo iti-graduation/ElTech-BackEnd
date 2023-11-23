@@ -334,3 +334,12 @@ class WeeklyDealSerializer(serializers.ModelSerializer):
         representation["product"] = product
 
         return representation
+
+
+class ProductNotificationSerializer(serializers.ModelSerializer):
+    """Serializer for product notifications."""
+
+    class Meta:
+        model = models.ProductNotification
+        fields = ['product', 'users']
+        read_only_fields = ['users']
