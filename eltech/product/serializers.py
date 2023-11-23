@@ -170,6 +170,7 @@ class ProductSerializer(serializers.ModelSerializer):
     """Serializer for products."""
 
     thumbnail = ProductThumbnailSerializer(read_only=True)
+    users_to_notify = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Product
@@ -184,6 +185,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
             "stock",
             "is_deleted",
+            "users_to_notify",
         ]
         read_only_fields = ["id"]
 
@@ -200,6 +202,11 @@ class ProductSerializer(serializers.ModelSerializer):
             representation["thumbnail"] = {}
 
         return representation
+    
+    def get_users_to_notify(self, obj):
+        notifications = models.ProductNotification.objects.filter(product=obj)
+        users = [user for notification in notifications for user in notification.users.all()]
+        return UserSerializer(users, many=True).data
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
@@ -271,7 +278,7 @@ class CategoryDetailSerializer(CategorySerializer):
 class ProductDetailSerializer(ProductSerializer):
     """Serializer for product detail view."""
 
-    users_to_notify = serializers.SerializerMethodField()
+    # users_to_notify = serializers.SerializerMethodField()
     images = ProductImageSerializer(many=True, read_only=True)
     features = ProductFeatureSerializer(many=True, read_only=True)
     ratings = RatingSerializer(many=True, read_only=True)
@@ -287,7 +294,7 @@ class ProductDetailSerializer(ProductSerializer):
             "images",
             "is_trending",
             "is_featured",
-            "users_to_notify",
+            # "users_to_notify",
         ]
 
     def to_representation(self, instance):
@@ -321,10 +328,10 @@ class ProductDetailSerializer(ProductSerializer):
     #     users = [notification.user for notification in notifications]
     #     return UserSerializer(users, many=True).data
     
-    def get_users_to_notify(self, obj):
-        notifications = models.ProductNotification.objects.filter(product=obj)
-        users = [user for notification in notifications for user in notification.users.all()]
-        return UserSerializer(users, many=True).data
+    # def get_users_to_notify(self, obj):
+    #     notifications = models.ProductNotification.objects.filter(product=obj)
+    #     users = [user for notification in notifications for user in notification.users.all()]
+    #     return UserSerializer(users, many=True).data
 
 
 class WeeklyDealSerializer(serializers.ModelSerializer):

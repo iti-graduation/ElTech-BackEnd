@@ -118,7 +118,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         if category is not None:
             queryset = queryset.filter(category__id=category)
 
-        if is_deleted is not None:
+        if is_deleted:
             queryset = queryset.filter(is_deleted=True)
 
         if query:
