@@ -30,6 +30,11 @@ class RatingSerializer(serializers.ModelSerializer):
         fields = ["id", "rating", "user"]
         read_only_fields = ["id", "user"]
 
+    def validate_user(self, value):
+        if value.is_staff:
+            raise serializers.ValidationError("Admins cannot add ratings.")
+        return value
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Serializer for reviews."""
@@ -40,6 +45,11 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = models.Review
         fields = ["id", "content", "created_at", "updated_at", "user"]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate_user(self, value):
+        if value.is_staff:
+            raise serializers.ValidationError("Admins cannot add reviews.")
+        return value
 
 
 class ProductFeatureSerializer(serializers.ModelSerializer):
