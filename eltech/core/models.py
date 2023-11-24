@@ -157,7 +157,7 @@ class Product(models.Model):
     is_trending = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name="products"
+        Category, on_delete=models.PROTECT, related_name="products"
     )
 
     def __str__(self):

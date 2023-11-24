@@ -54,3 +54,8 @@ class OrderListView(generics.ListAPIView):
     serializer_class = serializers.OrderSerializer
     queryset = Order.objects.all().order_by('id')
 
+
+class OrderRetrieveView(generics.RetrieveAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = serializers.OrderSerializer
+    queryset = Order.objects.all().order_by('id')

@@ -15,4 +15,5 @@ app_name = 'order'
 urlpatterns = [
     path('', include(router.urls)),
     path('ordersList/', views.OrderListView.as_view(), name='order-list'),
+    path('order-details/<int:pk>', views.OrderRetrieveView.as_view(), name='order-details'),
 ]
