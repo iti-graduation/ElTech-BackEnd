@@ -7,7 +7,7 @@ from core.models import Service
 from service import serializers
 
 
-class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
+class ServiceViewSet(viewsets.ModelViewSet):
     """View for the manage service APIs"""
     serializer_class = serializers.ServiceSerializer
     queryset = Service.objects.all()
