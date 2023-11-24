@@ -20,7 +20,7 @@ class CartViewSet(viewsets.GenericViewSet):
     """
     Viewset for the Cart model.
     """
-    queryset = Cart.objects.all().order_by('-id')
+    queryset = Cart.objects.all().order_by('id')
     serializer_class = serializers.CartSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -40,7 +40,7 @@ class CartViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['post'], url_path='add_product')
     def add_cart_product(self, request, pk=None):
         """Create a cart product."""
-        
+
         if not Cart.objects.filter(user=request.user).exists():
             cart =Cart.objects.create(user=request.user)
         else:
@@ -65,12 +65,12 @@ class CartViewSet(viewsets.GenericViewSet):
 
         serializer = serializers.CartProductSerializer(cart_product, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
     @extend_schema(request=serializers.CartProductSerializer)
     @action(detail=False, methods=['patch'], url_path='update_product')
     def update_cart_product(self, request, pk=None):
         """update cart product."""
-        
+
         cart = Cart.objects.get(user=request.user)
 
         product = get_object_or_404(Product, id=request.data.get('product'))
@@ -84,7 +84,7 @@ class CartViewSet(viewsets.GenericViewSet):
             cart_product.quantity = 1
         else:
             cart_product.quantity = quantity
-    
+
         if cart_product.quantity > product.stock:
             cart_product.quantity = product.stock
             return Response({"detail": "Product stock is not enough."}, status=status.HTTP_400_BAD_REQUEST)
@@ -93,7 +93,7 @@ class CartViewSet(viewsets.GenericViewSet):
 
         serializer = serializers.CartProductSerializer(cart_product, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     @extend_schema(request=serializers.CartProductSerializer)
     @action(detail=False, methods=['get'], url_path='product/(?P<product_id>[^/.]+)')
     def get_cart_product(self, request, product_id=None):

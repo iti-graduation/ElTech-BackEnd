@@ -39,7 +39,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'price', 'thumbnail']
         read_only_fields = ['id']
-    
+
     def to_representation(self, instance):
         """Add thumbnail to serialized data."""
         representation = super().to_representation(instance)
@@ -99,6 +99,7 @@ class OrderSerializer(serializers.ModelSerializer):
         for product_data in products_data:
             product_data = CartProductSerializer(product_data, context=self.context).data
             product = Product.objects.get(id=product_data['product']['id'])
+            product.stock -= product_data['quantity']
 
             OrderProduct.objects.create(
                 order=order, product=product, quantity=product_data['quantity'])
@@ -107,6 +108,7 @@ class OrderSerializer(serializers.ModelSerializer):
         # Reset the cart
         cart.products.clear()
         cart.coupon = None
+        product.save()
         cart.save()
 
         # Send email to user

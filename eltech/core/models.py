@@ -163,6 +163,15 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def discount_price(self):
+        if self.sale_amount > 0 :
+            price =  float(self.price) * ((100 - self.sale_amount) / 100)
+        else:
+            price = self.price
+        return price
+
+
 
 class Rating(models.Model):
     """Rating object"""
@@ -259,7 +268,7 @@ class Cart(models.Model):
     def total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
         if self.coupon:
-            total *= 1 - self.coupon.discount / 100
+            total *= 1 - float(self.coupon.discount) / 100
         return total
 
 
@@ -272,7 +281,7 @@ class CartProduct(models.Model):
 
     @property
     def total_price(self):
-        return self.product.price * self.quantity
+        return float(self.product.discount_price * self.quantity)
 
 
 class Order(models.Model):

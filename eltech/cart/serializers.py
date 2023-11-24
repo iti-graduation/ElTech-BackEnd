@@ -34,6 +34,7 @@ class ProductSerializer(serializers.ModelSerializer):
         """Add thumbnail to serialized data."""
         representation = super().to_representation(instance)
 
+        representation['discount_price'] = instance.discount_price
         thumbnail = instance.images.filter(is_thumbnail=True).first()
         if thumbnail:
             representation['thumbnail'] = ProductThumbnailSerializer(thumbnail, context=self.context).data
