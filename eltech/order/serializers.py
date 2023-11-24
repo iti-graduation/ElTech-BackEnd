@@ -12,9 +12,19 @@ from core.models import (
     Order,
     OrderProduct,
     Cart,
-    CartProduct
+    CartProduct,
+    User
 )
 from cart.serializers import CartProductSerializer
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer for users."""
+
+    class Meta:
+        model = User
+        fields = ['id', 'email']
+        read_only_fields = ['id', 'email']
 
 class ProductThumbnailSerializer(serializers.ModelSerializer):
     """Serializer for product thumbnail."""
@@ -75,6 +85,7 @@ class OrderProductSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     """Serializer for orders."""
     products = OrderProductSerializer(source='orderproduct_set', many=True, read_only=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Order

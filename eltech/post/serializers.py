@@ -30,7 +30,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True) 
-    category = CategorySerializer(read_only=True) 
+    category = serializers.PrimaryKeyRelatedField(queryset=models.Category.objects.all())
     class Meta:
         model = models.Post
         fields = ['id', 'category', 'title', 'content', 'image','user','created_at', 'updated_at']
