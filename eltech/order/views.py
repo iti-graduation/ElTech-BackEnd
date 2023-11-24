@@ -36,21 +36,21 @@ class OrderViewSet(mixins.ListModelMixin,
         """Create a new order."""
         serializer.save(user=self.request.user)
 
-    @action(detail=False, methods=['patch'], url_path='update')
-    def update_order(self, request, pk=None):
+    @action(detail=False, methods=['patch'], url_path='update/(?P<order_id>[^/.]+)')
+    def update_order(self, request, order_id=None):
         """update an order."""
-        order = Order.objects.get(user=request.user)
+        order = Order.objects.get(id=order_id)
         order_status = request.data.get('status')
         order.status = order_status
 
         order.save()
         serializer = serializers.OrderSerializer(order, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    
-    
+
+
+
 class OrderListView(generics.ListAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = serializers.OrderSerializer
-    queryset = Order.objects.all()
+    queryset = Order.objects.all().order_by('id')
 
