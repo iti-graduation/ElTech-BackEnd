@@ -32,6 +32,7 @@ services:
       - DB_PASS=eltechpassword
       - DEBUG=1
       - DB_PORT=5432
+      - PYTHONUNBUFFERED=1
     depends_on:
       - db
 

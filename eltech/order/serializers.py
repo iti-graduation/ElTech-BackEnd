@@ -3,6 +3,9 @@ Serializers for product APIs
 """
 from rest_framework import serializers
 
+from django.core.mail import send_mail
+from django.conf import settings
+
 from core.models import (
     Product,
     ProductImage,
@@ -36,7 +39,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'price', 'thumbnail']
         read_only_fields = ['id']
-    
+
     def to_representation(self, instance):
         """Add thumbnail to serialized data."""
         representation = super().to_representation(instance)
@@ -96,6 +99,7 @@ class OrderSerializer(serializers.ModelSerializer):
         for product_data in products_data:
             product_data = CartProductSerializer(product_data, context=self.context).data
             product = Product.objects.get(id=product_data['product']['id'])
+            product.stock -= product_data['quantity']
 
             OrderProduct.objects.create(
                 order=order, product=product, quantity=product_data['quantity'])
@@ -104,6 +108,13 @@ class OrderSerializer(serializers.ModelSerializer):
         # Reset the cart
         cart.products.clear()
         cart.coupon = None
+        product.save()
         cart.save()
+
+        # Send email to user
+        subject = "Order Confirmation"
+        message = f'Your order has been placed successfully. The total amount is {order.total_price}.'
+        from_email = settings.EMAIL_FROM
+        send_mail(subject, message, from_email, [self.context["request"].user.email], fail_silently=False)
 
         return order
