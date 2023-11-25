@@ -13,6 +13,9 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from rest_framework import generics
 
+from django.core.mail import send_mail
+from django.conf import settings
+
 from core.models import Order
 from order import serializers
 
@@ -45,6 +48,13 @@ class OrderViewSet(mixins.ListModelMixin,
 
         order.save()
         serializer = serializers.OrderSerializer(order, context={'request': request})
+
+        # Send email to user
+        subject = "Order Status Update"
+        message = f'Your order status has been updated to {order_status}.'
+        from_email = settings.EMAIL_FROM
+        send_mail(subject, message, from_email, [order.user.email], fail_silently=False)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
