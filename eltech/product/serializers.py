@@ -344,25 +344,47 @@ class ProductDetailSerializer(ProductSerializer):
     #     return UserSerializer(users, many=True).data
 
 
+# class WeeklyDealSerializer(serializers.ModelSerializer):
+#     """Serializer for weekly deals."""
+
+#     product = ProductSerializer(read_only=True)
+
+#     class Meta:
+#         model = models.WeeklyDeal
+#         fields = ["id", "deal_time", "product"]
+#         read_only_fields = ["id"]
+
+#     def to_representation(self, instance):
+#         """Add product to serialized data."""
+#         representation = super().to_representation(instance)
+
+#         product = ProductSerializer(instance.product, context=self.context).data
+#         representation["product"] = product
+
+#         return representation
+
+
 class WeeklyDealSerializer(serializers.ModelSerializer):
     """Serializer for weekly deals."""
 
+    product_id = serializers.IntegerField(write_only=True)
     product = ProductSerializer(read_only=True)
 
     class Meta:
         model = models.WeeklyDeal
-        fields = ["id", "deal_time", "product"]
+        fields = ["id", "deal_time", "product", "product_id"]
         read_only_fields = ["id"]
 
-    def to_representation(self, instance):
-        """Add product to serialized data."""
-        representation = super().to_representation(instance)
+    def create(self, validated_data):
+        product_id = validated_data.pop('product_id')
+        product = models.Product.objects.get(id=product_id)
+        return models.WeeklyDeal.objects.create(product=product, **validated_data)
 
-        product = ProductSerializer(instance.product, context=self.context).data
-        print(product)
-        representation["product"] = product
-
-        return representation
+    def update(self, instance, validated_data):
+        product_id = validated_data.pop('product_id', None)
+        if product_id is not None:
+            instance.product = models.Product.objects.get(id=product_id)
+        return super().update(instance, validated_data)
 
 
 class ProductNotificationSerializer(serializers.ModelSerializer):

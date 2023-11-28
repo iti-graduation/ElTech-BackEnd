@@ -18,13 +18,10 @@ app_name = 'product'
 
 urlpatterns = [
     path('', include(router.urls)),
-    # path('weekly-deal/', views.WeeklyDealView.as_view(), name='weekly-deal'),
     path('products/<int:pk>/reviews/', views.ProductViewSet.as_view({'post': 'reviews'}), name='product-reviews'),
     path('products/<int:pk>/ratings/', views.ProductViewSet.as_view({'post': 'ratings'}), name='product-ratings'),
     path('products/<int:pk>/upload_image/', views.ProductViewSet.as_view({'post': 'upload_image'}), name='product-upload-image'),
-    # path('products/<int:pk>/add_Feature/', views.ProductViewSet.as_view({'post': 'add_feature'}), name='product-add-feature'),
     path('products/<int:pk>/reviews/<int:review_id>/', views.ProductViewSet.as_view({'delete': 'delete_review'}),
         name='product-review-delete'),
-    # path('products/<int:product_id>/upload_image/', views.ProductImageUploadView.as_view(), name='upload_product_image'),
-    # path('products/<int:product_id>/add_feature/', views.ProductFeatureAddView.as_view(), name='add_product_feature'),
+    path('weekly-deal/', views.WeeklyDealViewSet.as_view({'patch': 'update'}), name='weekly-deal-update'),
 ]

@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from django.core.mail import send_mail
 from django.conf import settings
+from django.template.loader import render_to_string
 
 from core.models import (
     Product,
@@ -123,9 +124,18 @@ class OrderSerializer(serializers.ModelSerializer):
         cart.save()
 
         # Send email to user
+        # subject = "Order Confirmation"
+        # message = f'Your order has been placed successfully. The total amount is {order.total_price}.'
+        # from_email = settings.EMAIL_FROM
+        # send_mail(subject, message, from_email, [self.context["request"].user.email], fail_silently=False)
+
         subject = "Order Confirmation"
-        message = f'Your order has been placed successfully. The total amount is {order.total_price}.'
+        message = render_to_string('email.html', {
+            'user': self.context["request"].user,
+            'content': f'Your order has been placed successfully. The total amount is {order.total_price}.'
+        })
         from_email = settings.EMAIL_FROM
         send_mail(subject, message, from_email, [self.context["request"].user.email], fail_silently=False)
+
 
         return order

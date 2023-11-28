@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.template.loader import render_to_string
 
 from rest_framework import generics, authentication, permissions
 from rest_framework.generics import DestroyAPIView
@@ -152,13 +153,19 @@ class PasswordResetRequestView(generics.GenericAPIView):
                 reset_link = f"http://localhost:3000/reset-password/{uid}/{token}"
 
                 # Send email
+                # subject = "Password Reset Requested"
+                # message = f"Please follow this link to reset your password: {reset_link}"
+                # # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                # from_email = settings.EMAIL_FROM
+                # # from_email = '0eltech0@gmail.com'
+                # send_mail(subject, message, from_email, [user.email])
+
                 subject = "Password Reset Requested"
-                message = f"Please follow this link to reset your password: {reset_link}"
-                # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
-                print('Email From Settings: ', settings.EMAIL_FROM)
+                message = render_to_string('email.html', {
+                    'user': user,
+                    'content': f"Please follow this link to reset your password: {reset_link}"
+                })
                 from_email = settings.EMAIL_FROM
-                # from_email = '0eltech0@gmail.com'
-                print('Email From: ', from_email)
                 send_mail(subject, message, from_email, [user.email])
 
         # Always return the same message whether the user exists or not
@@ -249,9 +256,17 @@ class VerifyEmailRequestView(generics.GenericAPIView):
                 verification_link = f"http://localhost:3000/verify-email/{uid}/{token}"
 
                 # Send email
+                # subject = "Email Verification Requested"
+                # message = f"Please follow this link to verify your email: {verification_link}"
+                # # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                # from_email = settings.EMAIL_FROM
+                # send_mail(subject, message, from_email, [user.email])
+
                 subject = "Email Verification Requested"
-                message = f"Please follow this link to verify your email: {verification_link}"
-                # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+                message = render_to_string('email.html', {
+                    'user': user,
+                    'content': f"Please follow this link to verify your email: {verification_link}"
+                })
                 from_email = settings.EMAIL_FROM
                 send_mail(subject, message, from_email, [user.email])
 

@@ -20,6 +20,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
+from django.template.loader import render_to_string
 
 from core.models import (
     Product,
@@ -199,13 +200,20 @@ class ProductViewSet(viewsets.ModelViewSet):
             notifications = ProductNotification.objects.filter(product=product)
             for notification in notifications:
                 for user in notification.users.all():
-                    send_mail(
-                        'Product Available',
-                        f'The product {product.name} is now available.',
-                        settings.EMAIL_FROM,
-                        [user.email],
-                        fail_silently=False,
-                    )
+                    # send_mail(
+                    #     'Product Available',
+                    #     f'The product {product.name} is now available.',
+                    #     settings.EMAIL_FROM,
+                    #     [user.email],
+                    #     fail_silently=False,
+                    # )
+                    subject = 'Product Available'
+                    message = render_to_string('email.html', {
+                        'user': user,
+                        'content': f'The product {product.name} is now available.'
+                    })
+                    from_email = settings.EMAIL_FROM
+                    send_mail(subject, message, from_email, [user.email], fail_silently=False)
                 notification.delete()
         return response
 
@@ -308,6 +316,13 @@ class WeeklyDealViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
 
     serializer_class = serializers.WeeklyDealSerializer
     queryset = WeeklyDeal.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"])
     def latest(self, request):
