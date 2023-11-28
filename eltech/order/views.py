@@ -15,6 +15,7 @@ from rest_framework import generics
 
 from django.core.mail import send_mail
 from django.conf import settings
+from django.template.loader import render_to_string
 
 from core.models import Order
 from order import serializers
@@ -50,8 +51,16 @@ class OrderViewSet(mixins.ListModelMixin,
         serializer = serializers.OrderSerializer(order, context={'request': request})
 
         # Send email to user
+        # subject = "Order Status Update"
+        # message = f'Your order status has been updated to {order_status}.'
+        # from_email = settings.EMAIL_FROM
+        # send_mail(subject, message, from_email, [order.user.email], fail_silently=False)
+
         subject = "Order Status Update"
-        message = f'Your order status has been updated to {order_status}.'
+        message = render_to_string('email.html', {
+            'user': order.user,
+            'content': f'Your order status has been updated to {order_status}.'
+        })
         from_email = settings.EMAIL_FROM
         send_mail(subject, message, from_email, [order.user.email], fail_silently=False)
 
