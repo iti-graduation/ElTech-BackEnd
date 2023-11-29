@@ -181,6 +181,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     thumbnail = ProductThumbnailSerializer(read_only=True)
     users_to_notify = serializers.SerializerMethodField()
+    discount_price = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Product
@@ -191,6 +192,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_hot",
             "is_on_sale",
             "sale_amount",
+            "discount_price",
             "thumbnail",
             "description",
             "stock",
@@ -212,11 +214,16 @@ class ProductSerializer(serializers.ModelSerializer):
             representation["thumbnail"] = {}
 
         return representation
-    
+
     def get_users_to_notify(self, obj):
         notifications = models.ProductNotification.objects.filter(product=obj)
-        users = [user for notification in notifications for user in notification.users.all()]
+        users = [
+            user for notification in notifications for user in notification.users.all()
+        ]
         return UserSerializer(users, many=True).data
+
+    def get_discount_price(self, obj):
+        return obj.discount_price
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
@@ -332,12 +339,12 @@ class ProductDetailSerializer(ProductSerializer):
         representation["reviews_count"] = reviews_count
 
         return representation
-    
+
     # def get_users_to_notify(self, obj):
     #     notifications = models.ProductNotification.objects.filter(product=obj)
     #     users = [notification.user for notification in notifications]
     #     return UserSerializer(users, many=True).data
-    
+
     # def get_users_to_notify(self, obj):
     #     notifications = models.ProductNotification.objects.filter(product=obj)
     #     users = [user for notification in notifications for user in notification.users.all()]
@@ -376,12 +383,12 @@ class WeeklyDealSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def create(self, validated_data):
-        product_id = validated_data.pop('product_id')
+        product_id = validated_data.pop("product_id")
         product = models.Product.objects.get(id=product_id)
         return models.WeeklyDeal.objects.create(product=product, **validated_data)
 
     def update(self, instance, validated_data):
-        product_id = validated_data.pop('product_id', None)
+        product_id = validated_data.pop("product_id", None)
         if product_id is not None:
             instance.product = models.Product.objects.get(id=product_id)
         return super().update(instance, validated_data)
@@ -392,5 +399,5 @@ class ProductNotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.ProductNotification
-        fields = ['product', 'users']
-        read_only_fields = ['users']
+        fields = ["product", "users"]
+        read_only_fields = ["users"]
