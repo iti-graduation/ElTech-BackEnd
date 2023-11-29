@@ -141,32 +141,35 @@ class PasswordResetRequestView(generics.GenericAPIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             user = User.objects.filter(email=email).first()
-            if user:
-                token = default_token_generator.make_token(user)
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-                # Create reset link
-                # reset_link = request.build_absolute_uri(
-                #     reverse('accounts:password-reset-confirm', args=[uid, token])
-                # )
-                # Create reset link
-                reset_link = f"http://localhost:3000/reset-password/{uid}/{token}"
+            if user is None:
+                return Response({"error": "No user associated with this email address."}, status=status.HTTP_400_BAD_REQUEST)
 
-                # Send email
-                # subject = "Password Reset Requested"
-                # message = f"Please follow this link to reset your password: {reset_link}"
-                # # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
-                # from_email = settings.EMAIL_FROM
-                # # from_email = '0eltech0@gmail.com'
-                # send_mail(subject, message, from_email, [user.email])
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-                subject = "Password Reset Requested"
-                message = render_to_string('email.html', {
-                    'user': user,
-                    'content': f"Please follow this link to reset your password: {reset_link}"
-                })
-                from_email = settings.EMAIL_FROM
-                send_mail(subject, message, from_email, [user.email])
+            # Create reset link
+            # reset_link = request.build_absolute_uri(
+            #     reverse('accounts:password-reset-confirm', args=[uid, token])
+            # )
+            # Create reset link
+            reset_link = f"http://localhost:3000/reset-password/{uid}/{token}"
+
+            # Send email
+            # subject = "Password Reset Requested"
+            # message = f"Please follow this link to reset your password: {reset_link}"
+            # # from_email = None  # Use the DEFAULT_FROM_EMAIL from settings
+            # from_email = settings.EMAIL_FROM
+            # # from_email = '0eltech0@gmail.com'
+            # send_mail(subject, message, from_email, [user.email])
+
+            subject = "Password Reset Requested"
+            message = render_to_string('email.html', {
+                'user': user,
+                'content': f"Please follow this link to reset your password: {reset_link}"
+            })
+            from_email = settings.EMAIL_FROM
+            send_mail(subject, message, from_email, [user.email])
 
         # Always return the same message whether the user exists or not
         # to prevent data leakage
