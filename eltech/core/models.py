@@ -166,7 +166,7 @@ class Product(models.Model):
     @property
     def discount_price(self):
         if self.sale_amount > 0 :
-            price =  round(float(self.price) * ((100 - self.sale_amount) / 100),2)
+            price =  round(float(self.price) * ((100 - self.sale_amount) / 100), 2)
         else:
             price = self.price
         return price
@@ -262,14 +262,14 @@ class Cart(models.Model):
     @property
     def default_total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
-        return total
+        return round(total, 2)
 
     @property
     def total_price(self):
         total = sum(cp.total_price for cp in self.cartproduct_set.all())
         if self.coupon:
             total *= 1 - float(self.coupon.discount) / 100
-        return round(total,2)
+        return round(total, 2)
 
 
 class CartProduct(models.Model):
