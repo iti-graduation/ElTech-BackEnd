@@ -57,8 +57,18 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
     pagination_class = PostPagination 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    # ordering_fields = ['created_at','user_id'] 
+    # permission_classes = [IsAuthenticated]
+    # ordering_fields = ['created_at','user_id']
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action == 'list':
+            permission_classes = []
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
 
     def get_queryset(self):
