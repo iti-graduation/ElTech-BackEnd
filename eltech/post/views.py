@@ -64,7 +64,7 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.action == 'list':
+        if self.action in ['list', 'retrieve']:
             permission_classes = []
         else:
             permission_classes = [IsAuthenticated]
